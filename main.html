@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TASX Application Survey</title>
+<style>
+  :root{
+    --accent1:#2575fc;
+    --accent2:#6a11cb;
+    --muted:#f3f6fb;
+  }
+  body{ font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:#f6f8fb; margin:0; padding:18px; color:#1f2937;}
+  header{ background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:white; padding:18px 22px; border-radius:10px; box-shadow:0 6px 18px rgba(36,50,90,.06); margin-bottom:14px;}
+  header h1{ margin:0; font-size:1.1rem; font-weight:600; }
+  header p{ margin:6px 0 0; opacity:.95; font-size:.9rem; }
+
+  /* ---- NEW: Top row with Company + Buttons ---- */
+  .top-controls{
+    display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap;
+  }
+  .top-controls .company-group{
+    display:flex; align-items:center; gap:8px; flex:1; min-width:280px;
+  }
+  .top-controls label{ white-space:nowrap; font-weight:600; }
+  .top-controls input{
+    flex:1; max-width:380px; padding:8px 12px; border:1px solid #e6eef8; border-radius:8px;
+  }
+  .top-controls .btn-group{
+    display:flex; gap:8px;
+  }
+  .top-controls button{
+    padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600;
+  }
+  .top-controls .add{ background:var(--accent1); color:white; }
+  .top-controls .remove{ background:#ef4444; color:white; }
+  .top-controls .reset{ background:#6b7280; color:white; }
+
+  .table-wrap{ background:white; border-radius:10px; padding:10px; box-shadow:0 6px 20px rgba(20,30,60,.04); overflow:auto; }
+  table{ border-collapse:collapse; width:100%; min-width:900px; }
+  table th:first-child, table td:first-child{ white-space:nowrap; width:1%; min-width:140px; max-width:240px; }
+  thead th{ background:#f3f6fb; padding:12px; border-bottom:1px solid #e6eefb; text-align:left; }
+  tbody td{ padding:10px; border-top:1px solid #f1f6fb; vertical-align:top; }
+  .section-title{ background:#eef6ff; font-weight:700; padding:8px; border-radius:6px; } /* restored */
+  .project-header-cell{ width:180px; text-align:left; vertical-align:top; padding:10px; background:#fbfdff; border-left:1px solid #eef6fb; overflow:hidden; }
+  .proj-name{ display:block; width:100%; box-sizing:border-box; padding:6px 8px; background:#fffbea; border:1px solid #e6eef8; border-radius:6px; cursor:text; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .proj-upload-wrap{ margin-top:8px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .proj-upload{ padding:6px 8px; background:#eef2ff; border:1px solid #dfe7ff; border-radius:6px; cursor:pointer; font-size:13px; }
+  .proj-filename{ font-size:12px; color:#4b5563; }
+  .before-after{ display:flex; gap:8px; }
+  .before-after input{ width:50%; padding:6px 8px; border-radius:6px; border:1px solid #e6eef8; }
+  .cell-textarea{ width:100%; padding:8px; min-height:44px; border-radius:6px; border:1px solid #e6eef8; resize:none; }
+  .focus-cell{ box-shadow:0 0 0 3px rgba(37,99,235,.06) inset; background:#f6fbff; border-radius:6px; }
+  .submit-row{ display:flex; justify-content:flex-end; margin-top:12px; }
+  .submit-btn{ background:#10b981; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:600; }
+  .success-alert{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.98); background:#10b981; color:white; padding:14px 20px; border-radius:10px; box-shadow:0 10px 30px rgba(20,50,20,.15); opacity:0; transition:all .35s ease; pointer-events:none; z-index:9999;}
+  .success-alert.show{ opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
+  @media (max-width:900px){
+    .top-controls{ flex-direction:column; align-items:stretch; }
+    .top-controls .company-group{ flex-direction:column; align-items:flex-start; }
+    .top-controls input{ max-width:none; }
+    .top-controls .btn-group{ justify-content:flex-end; }
+    .project-header-cell{ width:140px; }
+    table{ min-width:720px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TASX Software Feedback</h1>
+  <p style="margin:6px 0 0; font-size:.88rem; opacity:.95;">Allowing us to know better about your work, and further expectations</p>
+</header>
+
+<!-- ==== ONE ROW: Company + Buttons ==== -->
+<div class="top-controls">
+  <div class="company-group">
+    <label for="companyName">Your Company Name:</label>
+    <input type="text" id="companyName" placeholder="Enter company name…" />
+  </div>
+  <div class="btn-group">
+    <button id="addProject" class="add">+ Add Project</button>
+    <button id="removeProject" class="remove">− Remove Project</button>
+    <button id="resetBtn" class="reset">Reset</button>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table id="matrixTable" role="grid" aria-label="Survey matrix">
+    <thead id="matrixHead"></thead>
+    <tbody id="matrixBody"></tbody>
+  </table>
+</div>
+
+<div class="submit-row">
+  <button id="submitBtn" class="submit-btn">Submit</button>
+</div>
+
+<div id="success" class="success-alert">Submission done</div>
+
+<script>
+/* ---------- Configuration ---------- */
+const QUESTIONS = [
+  "Project Settings",
+  "AI Beam Cross Section",
+  "Smart Tables",
+  "Wall Edit Section",
+  "Column Edit Section",
+  "Slab Parametric Rebar",
+  "Efficiency"
+];
+const STORAGE_KEY = "survey_matrix_poc_v1_base";
+
+/* ---------- State ---------- */
+let state = { companyName: "", projects: [] };
+
+/* ---------- Init ---------- */
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      state = JSON.parse(raw);
+      if(!Array.isArray(state.projects)) state.projects = [];
+    }
+  }catch(e){
+    console.warn("load parse error", e);
+    state = { companyName: "", projects: [] };
+  }
+  if(state.projects.length === 0){
+    state.projects = [
+      { name: "Project 1", screenshot: null, screenshotName: "", answers: {} },
+      { name: "Project 2", screenshot: null, screenshotName: "", answers: {} }
+    ];
+  }
+  const companyEl = document.getElementById('companyName');
+  if(companyEl) companyEl.value = state.companyName || "";
+}
+loadState();
+
+/* ---------- Helpers ---------- */
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function escapeHtml(s){ return String(s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;"); }
+function showSuccess(){ const el = document.getElementById("success"); el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2200); }
+
+/* ---------- Rendering ---------- */
+const headEl = document.getElementById("matrixHead");
+const bodyEl = document.getElementById("matrixBody");
+
+function renderHeader(){
+  headEl.innerHTML = "";
+  const tr = document.createElement("tr");
+  const th0 = document.createElement("th"); th0.textContent = "Questions"; tr.appendChild(th0);
+
+  state.projects.forEach((p, idx) => {
+    const th = document.createElement("th");
+    th.className = "project-header-cell";
+    th.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <div contenteditable="true" class="proj-name" data-proj="${idx}" aria-label="Project name">${escapeHtml(p.name)}</div>
+        <div class="proj-upload-wrap">
+          <button class="proj-upload" data-proj="${idx}">Upload screenshot</button>
+          ${p.screenshotName ? `<span class="proj-filename">${escapeHtml(p.screenshotName)}</span>` : ""}
+        </div>
+      </div>`;
+    tr.appendChild(th);
+  });
+  headEl.appendChild(tr);
+}
+
+function renderBody(){
+  bodyEl.innerHTML = "";
+  QUESTIONS.forEach((q, qIdx) => {
+    // section header (blue + bold)
+    const hr = document.createElement("tr");
+    const hc = document.createElement("td");
+    hc.className = "section-title";
+    hc.colSpan = state.projects.length + 1;
+    hc.textContent = `${qIdx + 1}. ${q}`;
+    hr.appendChild(hc);
+    bodyEl.appendChild(hr);
+
+    // time row
+    const trTime = document.createElement("tr");
+    const tdLabel = document.createElement("td"); tdLabel.textContent = "Time Taken"; trTime.appendChild(tdLabel);
+    state.projects.forEach((p, colIdx) => {
+      const td = document.createElement("td");
+      td.innerHTML = `
+        <div class="before-after">
+          <input type="text" class="input-before" data-q="${qIdx}" data-col="${colIdx}" placeholder="Before" value="${escapeHtml(getAns(p,qIdx,'before'))}">
+          <input type="text" class="input-after"  data-q="${qIdx}" data-col="${colIdx}" placeholder="After"  value="${escapeHtml(getAns(p,qIdx,'after'))}">
+        </div>`;
+      trTime.appendChild(td);
+    });
+    bodyEl.appendChild(trTime);
+
+    // feedback row
+    const trFb = document.createElement("tr");
+    const tdFbLabel = document.createElement("td"); tdFbLabel.textContent = "Feedback"; trFb.appendChild(tdFbLabel);
+    state.projects.forEach((p, colIdx) => {
+      const td = document.createElement("td");
+      const val = escapeHtml(getAns(p,qIdx,'feedback'));
+      td.innerHTML = `<textarea class="cell-feedback" data-q="${qIdx}" data-col="${colIdx}" placeholder="Enter feedback...">${val}</textarea>`;
+      trFb.appendChild(td);
+    });
+    bodyEl.appendChild(trFb);
+  });
+}
+
+/* ---------- Accessors ---------- */
+function getAns(project, qIdx, field){
+  const key = QUESTIONS[qIdx];
+  if(!project.answers) project.answers = {};
+  if(!project.answers[key]) project.answers[key] = { before: "", after: "", feedback: "" };
+  return project.answers[key][field] == null ? "" : String(project.answers[key][field]);
+}
+
+/* ---------- Wiring / Handlers ---------- */
+function wireUp(){
+  /* ---- Company name ---- */
+  const companyEl = document.getElementById('companyName');
+  companyEl?.addEventListener('input', e => {
+    state.companyName = e.target.value.trim();
+    saveState();
+  });
+
+  /* ---- Project name editing ---- */
+  document.querySelectorAll('.proj-name').forEach(el=>{
+    el.addEventListener('input', e=>{
+      const pi = +el.dataset.proj;
+      state.projects[pi].name = el.innerText || `Project ${pi+1}`;
+      saveState();
+    });
+    el.addEventListener('blur', e=>{
+      const pi = +el.dataset.proj;
+      state.projects[pi].name = el.innerText.trim() || `Project ${pi+1}`;
+      el.innerText = state.projects[pi].name;
+      saveState();
+    });
+  });
+
+  /* ---- Screenshot upload ---- */
+  document.querySelectorAll('.proj-upload').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const pi = +btn.dataset.proj;
+      const fi = document.createElement('input');
+      fi.type = 'file'; fi.accept = 'image/*';
+      fi.onchange = ev=>{
+        const f = ev.target.files[0];
+        if(!f) return;
+        const reader = new FileReader();
+        reader.onload = r=>{
+          state.projects[pi].screenshot = r.target.result;
+          state.projects[pi].screenshotName = f.name;
+          saveState();
+          rebuild();
+        };
+        reader.readAsDataURL(f);
+      };
+      fi.click();
+    });
+  });
+
+  /* ---- Inputs & Textareas ---- */
+  document.querySelectorAll('.input-before, .input-after, .cell-feedback').forEach(el=>{
+    el.addEventListener('input', e=>{
+      const q = +el.dataset.q, col = +el.dataset.col;
+      const key = QUESTIONS[q];
+      const field = el.classList.contains('input-before') ? 'before' :
+                    el.classList.contains('input-after') ? 'after' : 'feedback';
+      const proj = state.projects[col];
+      if(!proj.answers) proj.answers = {};
+      if(!proj.answers[key]) proj.answers[key] = { before: "", after: "", feedback: "" };
+      proj.answers[key][field] = el.value;
+      if(el.tagName === 'TEXTAREA') autoResize(el);
+      saveState();
+    });
+    el.addEventListener('keydown', navHandler);
+    el.addEventListener('focus', () => el.classList.add('focus-cell'));
+    el.addEventListener('blur', () => el.classList.remove('focus-cell'));
+    if(el.tagName === 'TEXTAREA') autoResize(el);
+  });
+}
+
+/* ---------- Keyboard Navigation (Improved) ---------- */
+function navHandler(e){
+  const el = e.target;
+  const q = +el.dataset.q;
+  const col = +el.dataset.col;
+  const isBefore = el.classList.contains('input-before');
+  const isAfter = el.classList.contains('input-after');
+  const isFeedback = el.classList.contains('cell-feedback');
+  const key = e.key;
+
+  const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Tab","Enter"];
+  if(!keys.includes(key)) return;
+  e.preventDefault();
+
+  function focus(qq, cc, type){
+    if(qq < 0 || qq >= QUESTIONS.length) return false;
+    if(cc < 0 || cc >= state.projects.length) return false;
+    const sel = type === 'before' ? `.input-before[data-q="${qq}"][data-col="${cc}"]` :
+                type === 'after'  ? `.input-after[data-q="${qq}"][data-col="${cc}"]` :
+                                    `.cell-feedback[data-q="${qq}"][data-col="${cc}"]`;
+    const target = document.querySelector(sel);
+    if(target) { target.focus(); return true; }
+    return false;
+  }
+
+  // Right / Tab
+  if(key === "ArrowRight" || (key === "Tab" && !e.shiftKey)){
+    if(isBefore && focus(q, col, 'after')) return;
+    if((isBefore || isAfter) && focus(q, col, 'feedback')) return;
+    if(focus(q, col+1, 'before')) return;
+  }
+
+  // Left / Shift+Tab
+  if(key === "ArrowLeft" || (key === "Tab" && e.shiftKey)){
+    if(isAfter && focus(q, col, 'before')) return;
+    if(isFeedback && focus(q, col, 'after')) return;
+    if(focus(q, col-1, 'feedback')) return;
+  }
+
+  // Down / Enter
+  if(key === "ArrowDown" || key === "Enter"){
+    if(isBefore || isAfter){
+      focus(q, col, 'feedback');
+    } else if(isFeedback){
+      focus(q+1, col, 'before');
+    }
+  }
+
+  // Up
+  if(key === "ArrowUp"){
+    if(isFeedback){
+      if(focus(q, col, 'after') || focus(q, col, 'before')) return;
+    }
+    if(isAfter || isBefore){
+      focus(q-1, col, 'feedback');
+    }
+  }
+}
+
+/* ---------- Helpers ---------- */
+function autoResize(ta){
+  ta.style.height = "auto";
+  ta.style.height = ta.scrollHeight + "px";
+}
+
+/* ---------- Rebuild ---------- */
+function rebuild(){ renderHeader(); renderBody(); wireUp(); }
+
+/* ---------- Buttons ---------- */
+document.getElementById('addProject').addEventListener('click', ()=>{
+  const next = state.projects.length + 1;
+  state.projects.push({ name:`Project ${next}`, screenshot:null, screenshotName:"", answers:{} });
+  saveState(); rebuild();
+  setTimeout(()=>{ document.querySelector(`.proj-name[data-proj="${state.projects.length-1}"]`)?.focus(); },60);
+});
+
+document.getElementById('removeProject').addEventListener('click', ()=>{
+  if(state.projects.length<=1) return;
+  state.projects.pop(); saveState(); rebuild();
+});
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(!confirm("Reset saved POC? This clears local storage and restores two sample projects.")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = { companyName:"", projects:[
+    {name:"Project 1",screenshot:null,screenshotName:"",answers:{}},
+    {name:"Project 2",screenshot:null,screenshotName:"",answers:{}}
+  ]};
+  saveState(); rebuild();
+});
+
+/* ---------- SUBMIT TO PANTRY (no download) ---------- */
+document.getElementById('submitBtn').addEventListener('click', async ()=>{
+  // Sync latest values
+  document.querySelectorAll('.input-before, .input-after, .cell-feedback').forEach(el=>{
+    const q = +el.dataset.q, col = +el.dataset.col;
+    const key = QUESTIONS[q];
+    const field = el.classList.contains('input-before') ? 'before' :
+                  el.classList.contains('input-after') ? 'after' : 'feedback';
+    const proj = state.projects[col];
+    if(!proj.answers) proj.answers = {};
+    if(!proj.answers[key]) proj.answers[key] = { before: "", after: "", feedback: "" };
+    proj.answers[key][field] = el.value;
+  });
+  state.companyName = document.getElementById('companyName').value.trim();
+  saveState();
+
+  const submission = JSON.parse(JSON.stringify(state));
+  submission.submittedAt = new Date().toISOString();
+
+  const BASKET_ID = 'tasx-survey-2025'; // <<<--- CHANGE TO YOUR BASKET ID
+  const BASE_URL = `https://getpantry.cloud/apiv1/pantries/${BASKET_ID}`;
+
+  try{
+    let current = { submissions: [] };
+    const getRes = await fetch(`https://getpantry.cloud/apiv1/pantry/2ecc5a54-3399-434b-8dec-0ac9bd307b65/basket/jsonBasket`);
+    if(getRes.ok) current = await getRes.json();
+    if(!Array.isArray(current.submissions)) current.submissions = [];
+
+    current.submissions.push(submission);
+
+    const putRes = await fetch(`https://getpantry.cloud/apiv1/pantry/2ecc5a54-3399-434b-8dec-0ac9bd307b65/basket/jsonBasket`,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(current)
+    });
+    if(!putRes.ok) throw new Error(`PUT failed: ${putRes.status}`);
+
+    console.log('Saved – total:', current.submissions.length);
+    showSuccess();
+  }catch(err){
+    console.error('Pantry error:',err);
+    alert('Could not save to Pantry – check console.');
+  }
+});
+
+/* ---------- Start ---------- */
+rebuild();
+</script>
+</body>
+</html>
