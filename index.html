@@ -10,12 +10,24 @@
     --accent2:#6a11cb;
     --muted:#f3f6fb;
   }
-  body{ font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:#f6f8fb; margin:0; padding:18px; color:#1f2937;}
-  header{ background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:white; padding:18px 22px; border-radius:10px; box-shadow:0 6px 18px rgba(36,50,90,.06); margin-bottom:14px;}
+  body{ 
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; 
+    background:#f6f8fb; 
+    margin:0; 
+    padding:18px; 
+    color:#1f2937;
+  }
+  header{ 
+    background:linear-gradient(90deg,var(--accent1),var(--accent2)); 
+    color:white; 
+    padding:18px 22px; 
+    border-radius:10px; 
+    box-shadow:0 6px 18px rgba(36,50,90,.06); 
+    margin-bottom:14px;
+  }
   header h1{ margin:0; font-size:1.1rem; font-weight:600; }
   header p{ margin:6px 0 0; opacity:.95; font-size:.9rem; }
 
-  /* ---- NEW: Top row with Company + Buttons ---- */
   .top-controls{
     display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap;
   }
@@ -36,32 +48,167 @@
   .top-controls .remove{ background:#ef4444; color:white; }
   .top-controls .reset{ background:#6b7280; color:white; }
 
-  .table-wrap{ background:white; border-radius:10px; padding:10px; box-shadow:0 6px 20px rgba(20,30,60,.04); overflow:auto; }
-  table{ border-collapse:collapse; width:100%; min-width:900px; }
-  table th:first-child, table td:first-child{ white-space:nowrap; width:1%; min-width:140px; max-width:240px; }
-  thead th{ background:#f3f6fb; padding:12px; border-bottom:1px solid #e6eefb; text-align:left; }
-  tbody td{ padding:10px; border-top:1px solid #f1f6fb; vertical-align:top; }
-  .section-title{ background:#eef6ff; font-weight:700; padding:8px; border-radius:6px; } /* restored */
-  .project-header-cell{ width:180px; text-align:left; vertical-align:top; padding:10px; background:#fbfdff; border-left:1px solid #eef6fb; overflow:hidden; }
-  .proj-name{ display:block; width:100%; box-sizing:border-box; padding:6px 8px; background:#fffbea; border:1px solid #e6eef8; border-radius:6px; cursor:text; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .proj-upload-wrap{ margin-top:8px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-  .proj-upload{ padding:6px 8px; background:#eef2ff; border:1px solid #dfe7ff; border-radius:6px; cursor:pointer; font-size:13px; }
-  .proj-filename{ font-size:12px; color:#4b5563; }
-  .before-after{ display:flex; gap:8px; }
-  .before-after input{ width:50%; padding:6px 8px; border-radius:6px; border:1px solid #e6eef8; }
-  .cell-textarea{ width:100%; padding:8px; min-height:44px; border-radius:6px; border:1px solid #e6eef8; resize:none; }
-  .focus-cell{ box-shadow:0 0 0 3px rgba(37,99,235,.06) inset; background:#f6fbff; border-radius:6px; }
-  .submit-row{ display:flex; justify-content:flex-end; margin-top:12px; }
-  .submit-btn{ background:#10b981; color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:600; }
-  .success-alert{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.98); background:#10b981; color:white; padding:14px 20px; border-radius:10px; box-shadow:0 10px 30px rgba(20,50,20,.15); opacity:0; transition:all .35s ease; pointer-events:none; z-index:9999;}
-  .success-alert.show{ opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
+  /* === FULLY SCROLLABLE + FROZEN FIRST COLUMN === */
+  .table-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(20,30,60,.04);
+    background: white;
+    position: relative;
+  }
+  .table-wrap {
+    width: 100%;
+    min-width: fit-content;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 900px;
+    table-layout: auto;
+  }
+
+  /* === FROZEN FIRST COLUMN (Questions) === */
+  th:first-child, td:first-child {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 11;
+    min-width: 160px;
+    max-width: 240px;
+    white-space: nowrap;
+    box-shadow: 2px 0 6px -2px rgba(0,0,0,.1);
+    padding: 10px;
+  }
+  th:first-child { 
+    background: #f3f6fb; 
+    z-index: 12;
+  }
+  .section-title {
+    background: #eef6ff !important;
+    font-weight: 700 !important;
+    padding: 8px;
+    border-radius: 6px;
+  }
+
+  /* Project headers */
+  .project-header-cell {
+    width: 170px;
+    min-width: 170px;
+    text-align: left;
+    vertical-align: top;
+    padding: 10px;
+    background: #fbfdff;
+    border-left: 1px solid #eef6fb;
+  }
+
+  .proj-name {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    background: #fffbea;
+    border: 1px solid #e6eef8;
+    border-radius: 6px;
+    cursor: text;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .proj-upload-wrap {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .proj-upload {
+    padding: 6px 8px;
+    background: #eef2ff;
+    border: 1px solid #dfe7ff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .proj-filename {
+    font-size: 12px;
+    color: #4b5563;
+  }
+
+  /* === COMPACT TIME INPUTS (70px) === */
+  .time-before-after, .time-triple {
+    display: flex;
+    gap: 6px;
+  }
+  .time-before-after input,
+  .time-triple input {
+    width: 70px;
+    min-width: 70px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #e6eef8;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .cell-textarea {
+    width: 100%;
+    padding: 8px;
+    min-height: 44px;
+    border-radius: 6px;
+    border: 1px solid #e6eef8;
+    resize: none;
+  }
+  .focus-cell {
+    box-shadow: 0 0 0 3px rgba(37,99,235,.06) inset;
+    background: #f6fbff;
+    border-radius: 6px;
+  }
+
+  .submit-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+  .submit-btn {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .success-alert {
+    position: fixed;
+    left: 50%; top: 50%;
+    transform: translate(-50%,-50%) scale(.98);
+    background: #10b981;
+    color: white;
+    padding: 14px 20px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(20,50,20,.15);
+    opacity: 0;
+    transition: all .35s ease;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  .success-alert.show {
+    opacity: 1;
+    transform: translate(-50%,-50%) scale(1);
+    pointer-events: auto;
+  }
+
   @media (max-width:900px){
     .top-controls{ flex-direction:column; align-items:stretch; }
     .top-controls .company-group{ flex-direction:column; align-items:flex-start; }
     .top-controls input{ max-width:none; }
     .top-controls .btn-group{ justify-content:flex-end; }
-    .project-header-cell{ width:140px; }
+    .project-header-cell{ width:140px; min-width:140px; }
     table{ min-width:720px; }
+    .time-before-after input, .time-triple input { width: 60px; min-width: 60px; }
   }
 </style>
 </head>
@@ -72,7 +219,6 @@
   <p style="margin:6px 0 0; font-size:.88rem; opacity:.95;">Allowing us to know better about your work, and further expectations</p>
 </header>
 
-<!-- ==== ONE ROW: Company + Buttons ==== -->
 <div class="top-controls">
   <div class="company-group">
     <label for="companyName">Your Company Name:</label>
@@ -85,11 +231,14 @@
   </div>
 </div>
 
-<div class="table-wrap">
-  <table id="matrixTable" role="grid" aria-label="Survey matrix">
-    <thead id="matrixHead"></thead>
-    <tbody id="matrixBody"></tbody>
-  </table>
+<!-- FULL WIDTH, HORIZONTAL SCROLL, FROZEN FIRST COLUMN -->
+<div class="table-container">
+  <div class="table-wrap">
+    <table id="matrixTable" role="grid" aria-label="Survey matrix">
+      <thead id="matrixHead"></thead>
+      <tbody id="matrixBody"></tbody>
+    </table>
+  </div>
 </div>
 
 <div class="submit-row">
@@ -102,11 +251,11 @@
 /* ---------- Configuration ---------- */
 const QUESTIONS = [
   "Project Settings",
-  "AI Beam Cross Section",
-  "Smart Tables",
-  "Wall Edit Section",
-  "Column Edit Section",
-  "Slab Parametric Rebar",
+  "AI Beam Cross Section (the entire project)",
+  "Smart Tables (the entire project)",
+  "Wall Edit Section (the entire project)",
+  "Column Edit Section (the entire project)",
+  "Slab Parametric Rebar (the entire project)",
   "Efficiency"
 ];
 const STORAGE_KEY = "survey_matrix_poc_v1_base";
@@ -129,7 +278,8 @@ function loadState(){
   if(state.projects.length === 0){
     state.projects = [
       { name: "Project 1", screenshot: null, screenshotName: "", answers: {} },
-      { name: "Project 2", screenshot: null, screenshotName: "", answers: {} }
+      { name: "Project 2", screenshot: null, screenshotName: "", answers: {} },
+      { name: "Project 3", screenshot: null, screenshotName: "", answers: {} }
     ];
   }
   const companyEl = document.getElementById('companyName');
@@ -170,7 +320,9 @@ function renderHeader(){
 function renderBody(){
   bodyEl.innerHTML = "";
   QUESTIONS.forEach((q, qIdx) => {
-    // section header (blue + bold)
+    const isDual = qIdx === 0 || qIdx === 6;
+
+    // Section title — FROZEN
     const hr = document.createElement("tr");
     const hc = document.createElement("td");
     hc.className = "section-title";
@@ -179,27 +331,37 @@ function renderBody(){
     hr.appendChild(hc);
     bodyEl.appendChild(hr);
 
-    // time row
+    // Time Taken
     const trTime = document.createElement("tr");
     const tdLabel = document.createElement("td"); tdLabel.textContent = "Time Taken"; trTime.appendChild(tdLabel);
     state.projects.forEach((p, colIdx) => {
       const td = document.createElement("td");
-      td.innerHTML = `
-        <div class="before-after">
-          <input type="text" class="input-before" data-q="${qIdx}" data-col="${colIdx}" placeholder="Before" value="${escapeHtml(getAns(p,qIdx,'before'))}">
-          <input type="text" class="input-after"  data-q="${qIdx}" data-col="${colIdx}" placeholder="After"  value="${escapeHtml(getAns(p,qIdx,'after'))}">
-        </div>`;
+      const ans = getAns(p, qIdx);
+      if (isDual) {
+        td.innerHTML = `
+          <div class="time-before-after">
+            <input type="text" class="input-before" data-q="${qIdx}" data-col="${colIdx}" placeholder="Before" value="${escapeHtml(ans.before)}">
+            <input type="text" class="input-after"  data-q="${qIdx}" data-col="${colIdx}" placeholder="After"  value="${escapeHtml(ans.after)}">
+          </div>`;
+      } else {
+        td.innerHTML = `
+          <div class="time-triple">
+            <input type="text" class="input-manual" data-q="${qIdx}" data-col="${colIdx}" placeholder="Manual" value="${escapeHtml(ans.manual || '')}">
+            <input type="text" class="input-trb"    data-q="${qIdx}" data-col="${colIdx}" placeholder="TRB"    value="${escapeHtml(ans.trb || '')}">
+            <input type="text" class="input-tasx"  data-q="${qIdx}" data-col="${colIdx}" placeholder="TASX"  value="${escapeHtml(ans.tasx || '')}">
+          </div>`;
+      }
       trTime.appendChild(td);
     });
     bodyEl.appendChild(trTime);
 
-    // feedback row
+    // Feedback
     const trFb = document.createElement("tr");
     const tdFbLabel = document.createElement("td"); tdFbLabel.textContent = "Feedback"; trFb.appendChild(tdFbLabel);
     state.projects.forEach((p, colIdx) => {
       const td = document.createElement("td");
-      const val = escapeHtml(getAns(p,qIdx,'feedback'));
-      td.innerHTML = `<textarea class="cell-feedback" data-q="${qIdx}" data-col="${colIdx}" placeholder="Enter feedback...">${val}</textarea>`;
+      const ans = getAns(p, qIdx);
+      td.innerHTML = `<textarea class="cell-feedback" data-q="${qIdx}" data-col="${colIdx}" placeholder="Enter feedback...">${escapeHtml(ans.feedback)}</textarea>`;
       trFb.appendChild(td);
     });
     bodyEl.appendChild(trFb);
@@ -207,69 +369,52 @@ function renderBody(){
 }
 
 /* ---------- Accessors ---------- */
-function getAns(project, qIdx, field){
+function getAns(project, qIdx){
   const key = QUESTIONS[qIdx];
   if(!project.answers) project.answers = {};
-  if(!project.answers[key]) project.answers[key] = { before: "", after: "", feedback: "" };
-  return project.answers[key][field] == null ? "" : String(project.answers[key][field]);
+  if(!project.answers[key]) {
+    project.answers[key] = { before:"", after:"", manual:"", trb:"", tasx:"", feedback:"" };
+  }
+  return project.answers[key];
 }
 
 /* ---------- Wiring / Handlers ---------- */
 function wireUp(){
-  /* ---- Company name ---- */
   const companyEl = document.getElementById('companyName');
-  companyEl?.addEventListener('input', e => {
-    state.companyName = e.target.value.trim();
-    saveState();
-  });
+  companyEl?.addEventListener('input', e => { state.companyName = e.target.value.trim(); saveState(); });
 
-  /* ---- Project name editing ---- */
   document.querySelectorAll('.proj-name').forEach(el=>{
-    el.addEventListener('input', e=>{
-      const pi = +el.dataset.proj;
-      state.projects[pi].name = el.innerText || `Project ${pi+1}`;
-      saveState();
-    });
-    el.addEventListener('blur', e=>{
-      const pi = +el.dataset.proj;
-      state.projects[pi].name = el.innerText.trim() || `Project ${pi+1}`;
-      el.innerText = state.projects[pi].name;
-      saveState();
-    });
+    el.addEventListener('input', e=>{ const pi = +el.dataset.proj; state.projects[pi].name = el.innerText || `Project ${pi+1}`; saveState(); });
+    el.addEventListener('blur', e=>{ const pi = +el.dataset.proj; state.projects[pi].name = el.innerText.trim() || `Project ${pi+1}`; el.innerText = state.projects[pi].name; saveState(); });
   });
 
-  /* ---- Screenshot upload ---- */
   document.querySelectorAll('.proj-upload').forEach(btn=>{
     btn.addEventListener('click', e=>{
       const pi = +btn.dataset.proj;
-      const fi = document.createElement('input');
-      fi.type = 'file'; fi.accept = 'image/*';
+      const fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*';
       fi.onchange = ev=>{
         const f = ev.target.files[0];
         if(!f) return;
         const reader = new FileReader();
-        reader.onload = r=>{
-          state.projects[pi].screenshot = r.target.result;
-          state.projects[pi].screenshotName = f.name;
-          saveState();
-          rebuild();
-        };
+        reader.onload = r=>{ state.projects[pi].screenshot = r.target.result; state.projects[pi].screenshotName = f.name; saveState(); rebuild(); };
         reader.readAsDataURL(f);
       };
       fi.click();
     });
   });
 
-  /* ---- Inputs & Textareas ---- */
-  document.querySelectorAll('.input-before, .input-after, .cell-feedback').forEach(el=>{
+  document.querySelectorAll('.input-before,.input-after,.input-manual,.input-trb,.input-tasx,.cell-feedback').forEach(el=>{
     el.addEventListener('input', e=>{
       const q = +el.dataset.q, col = +el.dataset.col;
       const key = QUESTIONS[q];
-      const field = el.classList.contains('input-before') ? 'before' :
-                    el.classList.contains('input-after') ? 'after' : 'feedback';
       const proj = state.projects[col];
       if(!proj.answers) proj.answers = {};
-      if(!proj.answers[key]) proj.answers[key] = { before: "", after: "", feedback: "" };
+      if(!proj.answers[key]) proj.answers[key] = { before:"", after:"", manual:"", trb:"", tasx:"", feedback:"" };
+      const field = el.classList.contains('input-before') ? 'before' :
+                    el.classList.contains('input-after') ? 'after' :
+                    el.classList.contains('input-manual') ? 'manual' :
+                    el.classList.contains('input-trb') ? 'trb' :
+                    el.classList.contains('input-tasx') ? 'tasx' : 'feedback';
       proj.answers[key][field] = el.value;
       if(el.tagName === 'TEXTAREA') autoResize(el);
       saveState();
@@ -281,60 +426,65 @@ function wireUp(){
   });
 }
 
-/* ---------- Keyboard Navigation (Improved) ---------- */
+/* ---------- Keyboard Navigation ---------- */
 function navHandler(e){
   const el = e.target;
   const q = +el.dataset.q;
   const col = +el.dataset.col;
-  const isBefore = el.classList.contains('input-before');
-  const isAfter = el.classList.contains('input-after');
-  const isFeedback = el.classList.contains('cell-feedback');
+  const isDual = q === 0 || q === 6;
   const key = e.key;
-
-  const keys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Tab","Enter"];
-  if(!keys.includes(key)) return;
+  if(!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Tab","Enter"].includes(key)) return;
   e.preventDefault();
 
   function focus(qq, cc, type){
-    if(qq < 0 || qq >= QUESTIONS.length) return false;
-    if(cc < 0 || cc >= state.projects.length) return false;
+    if(qq < 0 || qq >= QUESTIONS.length || cc < 0 || cc >= state.projects.length) return false;
     const sel = type === 'before' ? `.input-before[data-q="${qq}"][data-col="${cc}"]` :
                 type === 'after'  ? `.input-after[data-q="${qq}"][data-col="${cc}"]` :
+                type === 'manual' ? `.input-manual[data-q="${qq}"][data-col="${cc}"]` :
+                type === 'trb'    ? `.input-trb[data-q="${qq}"][data-col="${cc}"]` :
+                type === 'tasx'   ? `.input-tasx[data-q="${qq}"][data-col="${cc}"]` :
                                     `.cell-feedback[data-q="${qq}"][data-col="${cc}"]`;
     const target = document.querySelector(sel);
     if(target) { target.focus(); return true; }
     return false;
   }
 
-  // Right / Tab
   if(key === "ArrowRight" || (key === "Tab" && !e.shiftKey)){
-    if(isBefore && focus(q, col, 'after')) return;
-    if((isBefore || isAfter) && focus(q, col, 'feedback')) return;
-    if(focus(q, col+1, 'before')) return;
+    if(isDual){
+      if(el.classList.contains('input-before') && focus(q, col, 'after')) return;
+      if((el.classList.contains('input-before') || el.classList.contains('input-after')) && focus(q, col, 'feedback')) return;
+    } else {
+      if(el.classList.contains('input-manual') && focus(q, col, 'trb')) return;
+      if(el.classList.contains('input-trb') && focus(q, col, 'tasx')) return;
+      if((el.classList.contains('input-manual') || el.classList.contains('input-trb') || el.classList.contains('input-tasx')) && focus(q, col, 'feedback')) return;
+    }
+    focus(q, col+1, isDual ? 'before' : 'manual');
   }
 
-  // Left / Shift+Tab
   if(key === "ArrowLeft" || (key === "Tab" && e.shiftKey)){
-    if(isAfter && focus(q, col, 'before')) return;
-    if(isFeedback && focus(q, col, 'after')) return;
-    if(focus(q, col-1, 'feedback')) return;
+    if(isDual){
+      if(el.classList.contains('input-after') && focus(q, col, 'before')) return;
+      if(el.classList.contains('cell-feedback') && focus(q, col, 'after')) return;
+    } else {
+      if(el.classList.contains('input-trb') && focus(q, col, 'manual')) return;
+      if(el.classList.contains('input-tasx') && focus(q, col, 'trb')) return;
+      if(el.classList.contains('cell-feedback') && focus(q, col, 'tasx')) return;
+    }
+    focus(q, col-1, 'feedback');
   }
 
-  // Down / Enter
   if(key === "ArrowDown" || key === "Enter"){
-    if(isBefore || isAfter){
+    if(el.classList.contains('cell-feedback')){
+      focus(q+1, col, isDual ? 'before' : 'manual');
+    } else {
       focus(q, col, 'feedback');
-    } else if(isFeedback){
-      focus(q+1, col, 'before');
     }
   }
 
-  // Up
   if(key === "ArrowUp"){
-    if(isFeedback){
-      if(focus(q, col, 'after') || focus(q, col, 'before')) return;
-    }
-    if(isAfter || isBefore){
+    if(el.classList.contains('cell-feedback')){
+      focus(q, col, isDual ? 'after' : 'tasx');
+    } else {
       focus(q-1, col, 'feedback');
     }
   }
@@ -363,26 +513,29 @@ document.getElementById('removeProject').addEventListener('click', ()=>{
 });
 
 document.getElementById('resetBtn').addEventListener('click', ()=>{
-  if(!confirm("Reset saved POC? This clears local storage and restores two sample projects.")) return;
+  if(!confirm("Reset saved POC? This clears local storage and restores three sample projects.")) return;
   localStorage.removeItem(STORAGE_KEY);
   state = { companyName:"", projects:[
     {name:"Project 1",screenshot:null,screenshotName:"",answers:{}},
-    {name:"Project 2",screenshot:null,screenshotName:"",answers:{}}
+    {name:"Project 2",screenshot:null,screenshotName:"",answers:{}},
+    {name:"Project 3",screenshot:null,screenshotName:"",answers:{}}
   ]};
   saveState(); rebuild();
 });
 
-/* ---------- SUBMIT TO PANTRY (no download) ---------- */
+/* ---------- SUBMIT TO PANTRY ---------- */
 document.getElementById('submitBtn').addEventListener('click', async ()=>{
-  // Sync latest values
-  document.querySelectorAll('.input-before, .input-after, .cell-feedback').forEach(el=>{
+  document.querySelectorAll('.input-before,.input-after,.input-manual,.input-trb,.input-tasx,.cell-feedback').forEach(el=>{
     const q = +el.dataset.q, col = +el.dataset.col;
     const key = QUESTIONS[q];
-    const field = el.classList.contains('input-before') ? 'before' :
-                  el.classList.contains('input-after') ? 'after' : 'feedback';
     const proj = state.projects[col];
     if(!proj.answers) proj.answers = {};
-    if(!proj.answers[key]) proj.answers[key] = { before: "", after: "", feedback: "" };
+    if(!proj.answers[key]) proj.answers[key] = { before:"", after:"", manual:"", trb:"", tasx:"", feedback:"" };
+    const field = el.classList.contains('input-before') ? 'before' :
+                  el.classList.contains('input-after') ? 'after' :
+                  el.classList.contains('input-manual') ? 'manual' :
+                  el.classList.contains('input-trb') ? 'trb' :
+                  el.classList.contains('input-tasx') ? 'tasx' : 'feedback';
     proj.answers[key][field] = el.value;
   });
   state.companyName = document.getElementById('companyName').value.trim();
@@ -391,7 +544,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
   const submission = JSON.parse(JSON.stringify(state));
   submission.submittedAt = new Date().toISOString();
 
-  const BASKET_ID = 'tasx-survey-2025'; // <<<--- CHANGE TO YOUR BASKET ID
+  const BASKET_ID = 'tasx-survey-2025'; // CHANGE TO YOUR BASKET
   const BASE_URL = `https://getpantry.cloud/apiv1/pantries/${BASKET_ID}`;
 
   try{
@@ -421,6 +574,4 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
 rebuild();
 </script>
 </body>
-
 </html>
-
