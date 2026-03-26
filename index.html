@@ -1,577 +1,1742 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>TASX Application Survey</title>
+<!DOCTYPE html>
+<html lang="en" style="--accent: #5b3ef8;"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FormFlow — Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&amp;family=DM+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
 <style>
-  :root{
-    --accent1:#2575fc;
-    --accent2:#6a11cb;
-    --muted:#f3f6fb;
-  }
-  body{ 
-    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; 
-    background:#f6f8fb; 
-    margin:0; 
-    padding:18px; 
-    color:#1f2937;
-  }
-  header{ 
-    background:linear-gradient(90deg,var(--accent1),var(--accent2)); 
-    color:white; 
-    padding:18px 22px; 
-    border-radius:10px; 
-    box-shadow:0 6px 18px rgba(36,50,90,.06); 
-    margin-bottom:14px;
-  }
-  header h1{ margin:0; font-size:1.1rem; font-weight:600; }
-  header p{ margin:6px 0 0; opacity:.95; font-size:.9rem; }
+/* ══════════════════════════════════════
+   LIGHT THEME TOKENS
+══════════════════════════════════════ */
+:root{
+  --bg:#f4f6fb;
+  --surface:#ffffff;
+  --surface2:#f0f2f8;
+  --surface3:#e8eaf2;
+  --border:rgba(0,0,0,.09);
+  --bhi:rgba(0,0,0,.18);
+  --text:#1a1a2e;
+  --muted:#7b7fa6;
+  --accent:#5b3ef8;
+  --accent2:#00b89c;
+  --danger:#e03e3e;
+  --glow:rgba(91,62,248,.15);
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.12);
+  --r:14px;--rsm:8px;
+  --fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif;
+  --ease:cubic-bezier(.4,0,.2,1)
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--surface2)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+.hidden{display:none!important}
 
-  .top-controls{
-    display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap;
-  }
-  .top-controls .company-group{
-    display:flex; align-items:center; gap:8px; flex:1; min-width:280px;
-  }
-  .top-controls label{ white-space:nowrap; font-weight:600; }
-  .top-controls input{
-    flex:1; max-width:380px; padding:8px 12px; border:1px solid #e6eef8; border-radius:8px;
-  }
-  .top-controls .btn-group{
-    display:flex; gap:8px;
-  }
-  .top-controls button{
-    padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600;
-  }
-  .top-controls .add{ background:var(--accent1); color:white; }
-  .top-controls .remove{ background:#ef4444; color:white; }
-  .top-controls .reset{ background:#6b7280; color:white; }
+/* ── BUTTONS ── */
+.btn{font-family:var(--fb);font-size:13px;font-weight:500;padding:7px 16px;border-radius:var(--rsm);border:none;cursor:pointer;transition:.18s var(--ease);outline:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--bhi);background:var(--surface2)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#7c5cfc);color:#fff;box-shadow:0 2px 12px var(--glow)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px var(--glow)}
+.btn-sm{padding:5px 12px;font-size:11px}
+.btn-danger{background:rgba(224,62,62,.07);color:var(--danger);border:1px solid rgba(224,62,62,.2)}
+.btn-danger:hover{background:rgba(224,62,62,.14)}
+.btn-icon{width:28px;height:28px;padding:0;justify-content:center;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:6px;font-size:12px}
+.btn-icon:hover{color:var(--text);border-color:var(--bhi);background:var(--surface3)}
+.btn-teal{background:linear-gradient(135deg,var(--accent2),#00d4b4);color:#fff;box-shadow:0 2px 10px rgba(0,184,156,.2)}
+.btn-teal:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(0,184,156,.3)}
 
-  /* === FULLY SCROLLABLE + FROZEN FIRST COLUMN === */
-  .table-container {
-    overflow-x: auto;
-    overflow-y: visible;
-    border-radius: 10px;
-    box-shadow: 0 6px 20px rgba(20,30,60,.04);
-    background: white;
-    position: relative;
-  }
-  .table-wrap {
-    width: 100%;
-    min-width: fit-content;
-  }
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: 900px;
-    table-layout: auto;
-  }
+/* ── FORM CONTROLS ── */
+.fi{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rsm);padding:9px 13px;font-family:var(--fb);font-size:13px;color:var(--text);outline:none;transition:.18s var(--ease)}
+.fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.fi::placeholder{color:var(--muted)}
+textarea.fi{resize:vertical;min-height:60px;line-height:1.5}
+.lbl{display:block;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.sel-wrap{position:relative}
+.sel-wrap::after{content:'▾';position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px}
+select.fi{appearance:none;padding-right:28px;cursor:pointer;background:var(--surface)}
+.toggle{width:36px;height:20px;border-radius:100px;background:var(--surface3);border:1.5px solid var(--border);cursor:pointer;position:relative;transition:.18s;flex-shrink:0}
+.toggle.on{background:var(--accent);border-color:var(--accent)}
+.toggle-t{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.18s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.toggle.on .toggle-t{transform:translateX(16px)}
 
-  /* === FROZEN FIRST COLUMN (Questions) === */
-  th:first-child, td:first-child {
-    position: sticky;
-    left: 0;
-    background: white;
-    z-index: 11;
-    min-width: 160px;
-    max-width: 240px;
-    white-space: nowrap;
-    box-shadow: 2px 0 6px -2px rgba(0,0,0,.1);
-    padding: 10px;
-  }
-  th:first-child { 
-    background: #f3f6fb; 
-    z-index: 12;
-  }
-  .section-title {
-    background: #eef6ff !important;
-    font-weight: 700 !important;
-    padding: 8px;
-    border-radius: 6px;
-  }
+/* ══════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════ */
+#builder{display:flex;flex-direction:column;height:100vh}
+.b-nav{
+  background:var(--surface);
+  border-bottom:1.5px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;height:54px;flex-shrink:0;gap:10px;
+  z-index:200;position:relative;
+  box-shadow:0 1px 6px rgba(0,0,0,.06)
+}
+.b-nav-l{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.b-nav-c{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.b-nav-r{display:flex;align-items:center;gap:7px;flex:1;justify-content:flex-end}
+.logo{font-family:var(--fd);font-size:19px;font-weight:600;letter-spacing:-.5px;display:flex;align-items:center;gap:7px;flex-shrink:0;color:var(--text)}
+.logo-i{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),#00b89c);display:flex;align-items:center;justify-content:center;font-size:13px}
+.logo span{color:var(--accent)}
+.form-title-inp{background:transparent;border:none;outline:none;font-family:var(--fd);font-size:14px;font-weight:600;color:var(--text);min-width:80px;max-width:200px;padding:3px 8px;border-radius:6px;transition:.18s}
+.form-title-inp:hover,.form-title-inp:focus{background:var(--surface2)}
+.tab-btn{font-family:var(--fb);font-size:12px;font-weight:600;padding:5px 14px;border-radius:6px;border:none;cursor:pointer;transition:.18s;background:transparent;color:var(--muted)}
+.tab-btn.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px var(--glow)}
+.tab-btn:hover:not(.active){color:var(--text);background:var(--surface2)}
+.save-status{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;white-space:nowrap}
+.b-body{flex:1;display:flex;overflow:hidden}
 
-  /* Project headers */
-  .project-header-cell {
-    width: 170px;
-    min-width: 170px;
-    text-align: left;
-    vertical-align: top;
-    padding: 10px;
-    background: #fbfdff;
-    border-left: 1px solid #eef6fb;
-  }
+/* ══════════════════════════════════════
+   LEFT PANEL
+══════════════════════════════════════ */
+.p-left{width:252px;flex-shrink:0;background:var(--surface);border-right:1.5px solid var(--border);display:flex;flex-direction:column;overflow:hidden;box-shadow:2px 0 8px rgba(0,0,0,.04)}
+.p-sec-hd{padding:10px 13px 8px;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
+.q-list{flex:1;overflow-y:auto;padding:6px}
 
-  .proj-name {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    padding: 6px 8px;
-    background: #fffbea;
-    border: 1px solid #e6eef8;
-    border-radius: 6px;
-    cursor: text;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .proj-upload-wrap {
-    margin-top: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  .proj-upload {
-    padding: 6px 8px;
-    background: #eef2ff;
-    border: 1px solid #dfe7ff;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-  }
-  .proj-filename {
-    font-size: 12px;
-    color: #4b5563;
-  }
+.q-item{padding:8px 10px;border-radius:var(--rsm);cursor:pointer;transition:.15s;border:1.5px solid transparent;margin-bottom:3px;display:flex;align-items:flex-start;gap:8px}
+.q-item:hover{background:var(--surface2)}
+.q-item.active{background:rgba(91,62,248,.07);border-color:rgba(91,62,248,.25)}
+.q-num{width:20px;height:20px;border-radius:5px;background:var(--surface3);border:1px solid var(--border);font-size:9px;font-weight:600;color:var(--muted);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.q-item.active .q-num{background:var(--accent);border-color:var(--accent);color:#fff}
+.q-info{flex:1;min-width:0}
+.q-type-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1px}
+.q-lbl{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.q-del{opacity:0;background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;padding:2px 4px;border-radius:3px;transition:.15s;flex-shrink:0;line-height:1}
+.q-item:hover .q-del{opacity:1}
+.q-del:hover{color:var(--danger);background:rgba(224,62,62,.08)}
 
-  /* === COMPACT TIME INPUTS (70px) === */
-  .time-before-after, .time-triple {
-    display: flex;
-    gap: 6px;
-  }
-  .time-before-after input,
-  .time-triple input {
-    width: 70px;
-    min-width: 70px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    border: 1px solid #e6eef8;
-    font-size: 0.9rem;
-    text-align: center;
-  }
+.sec-item{padding:7px 10px;border-radius:var(--rsm);cursor:pointer;transition:.15s;border:1.5px solid rgba(0,184,156,.15);margin-bottom:3px;display:flex;align-items:center;gap:8px;background:rgba(0,184,156,.04)}
+.sec-item:hover{background:rgba(0,184,156,.09)}
+.sec-item.active{background:rgba(0,184,156,.12);border-color:rgba(0,184,156,.35)}
+.sec-icon{width:20px;height:20px;border-radius:5px;background:rgba(0,184,156,.12);border:1px solid rgba(0,184,156,.3);font-size:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--accent2)}
+.sec-item.active .sec-icon{background:var(--accent2);color:#fff}
+.sec-children{margin-left:14px;border-left:2px solid rgba(0,184,156,.18);padding-left:8px}
+.sec-q-item{padding:7px 9px;border-radius:var(--rsm);cursor:pointer;transition:.15s;border:1.5px solid transparent;margin-bottom:2px;display:flex;align-items:flex-start;gap:7px}
+.sec-q-item:hover{background:var(--surface2)}
+.sec-q-item.active{background:rgba(91,62,248,.07);border-color:rgba(91,62,248,.25)}
 
-  .cell-textarea {
-    width: 100%;
-    padding: 8px;
-    min-height: 44px;
-    border-radius: 6px;
-    border: 1px solid #e6eef8;
-    resize: none;
-  }
-  .focus-cell {
-    box-shadow: 0 0 0 3px rgba(37,99,235,.06) inset;
-    background: #f6fbff;
-    border-radius: 6px;
-  }
+/* Matrix in list */
+.mat-item{padding:7px 10px;border-radius:var(--rsm);cursor:pointer;transition:.15s;border:1.5px solid rgba(255,150,0,.15);margin-bottom:3px;display:flex;align-items:center;gap:8px;background:rgba(255,150,0,.04)}
+.mat-item:hover{background:rgba(255,150,0,.09)}
+.mat-item.active{background:rgba(255,150,0,.12);border-color:rgba(255,150,0,.4)}
+.mat-icon{width:20px;height:20px;border-radius:5px;background:rgba(255,150,0,.12);border:1px solid rgba(255,150,0,.3);font-size:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#f07000}
+.mat-item.active .mat-icon{background:#f07000;color:#fff}
 
-  .submit-row {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 12px;
-  }
-  .submit-btn {
-    background: #10b981;
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-  }
+.screen-list-item{padding:7px 10px;border-radius:var(--rsm);cursor:pointer;transition:.15s;border:1.5px solid transparent;margin-bottom:3px;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-weight:600}
+.screen-list-item:hover{background:var(--surface2);color:var(--text)}
+.screen-list-item.active{background:rgba(91,62,248,.07);border-color:rgba(91,62,248,.25);color:var(--text)}
+.screen-list-icon{font-size:14px;flex-shrink:0}
 
-  .success-alert {
-    position: fixed;
-    left: 50%; top: 50%;
-    transform: translate(-50%,-50%) scale(.98);
-    background: #10b981;
-    color: white;
-    padding: 14px 20px;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(20,50,20,.15);
-    opacity: 0;
-    transition: all .35s ease;
-    pointer-events: none;
-    z-index: 9999;
-  }
-  .success-alert.show {
-    opacity: 1;
-    transform: translate(-50%,-50%) scale(1);
-    pointer-events: auto;
-  }
+.add-q-panel{padding:8px 6px;border-top:1.5px solid var(--border);background:var(--surface2)}
+.add-q-lbl{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 3px 6px}
+.q-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.q-type-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rsm);padding:2px 1px;cursor:pointer;transition:.15s;display:flex;flex-direction:column;align-items:center;gap:1px;font-family:var(--fb);color:var(--muted);font-size:6px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.q-type-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(91,62,248,.05)}
+.q-type-btn .ico{font-size:14px}
+.q-type-btn.section-btn{background:rgba(0,184,156,.04);border-color:rgba(0,184,156,.2);color:var(--accent2)}
+.q-type-btn.section-btn:hover{border-color:var(--accent2);background:rgba(0,184,156,.09)}
+.q-type-btn.matrix-btn{background:rgba(255,150,0,.04);border-color:rgba(255,150,0,.2);color:#f07000}
+.q-type-btn.matrix-btn:hover{border-color:#f07000;background:rgba(255,150,0,.09)}
 
-  @media (max-width:900px){
-    .top-controls{ flex-direction:column; align-items:stretch; }
-    .top-controls .company-group{ flex-direction:column; align-items:flex-start; }
-    .top-controls input{ max-width:none; }
-    .top-controls .btn-group{ justify-content:flex-end; }
-    .project-header-cell{ width:140px; min-width:140px; }
-    table{ min-width:720px; }
-    .time-before-after input, .time-triple input { width: 60px; min-width: 60px; }
-  }
+/* ══════════════════════════════════════
+   CANVAS
+══════════════════════════════════════ */
+.canvas-area{flex:1;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);background-image:radial-gradient(rgba(0,0,0,.04) 1px,transparent 1px);background-size:22px 22px}
+.canvas-inner{flex:1;overflow-y:auto;padding:28px 32px;display:flex;align-items:flex-start;justify-content:center}
+.editor-stack{width:100%;max-width:700px;display:flex;flex-direction:column;gap:14px}
+
+.q-editor,.screen-editor,.sec-editor,.mat-editor{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg);animation:slideIn .22s var(--ease) both}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.ed-head{padding:13px 22px;background:var(--surface2);border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.type-badge{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);background:rgba(91,62,248,.09);padding:4px 10px;border-radius:100px;border:1.5px solid rgba(91,62,248,.2)}
+.sec-badge{color:var(--accent2);background:rgba(0,184,156,.09);border-color:rgba(0,184,156,.25)}
+.mat-badge{color:#f07000;background:rgba(255,150,0,.09);border-color:rgba(255,150,0,.25)}
+.welcome-badge{color:var(--accent2);background:rgba(0,184,156,.08);border-color:rgba(0,184,156,.22)}
+.end-badge{color:#d4890a;background:rgba(255,189,46,.08);border-color:rgba(255,189,46,.22)}
+.ed-body{padding:22px;display:flex;flex-direction:column;gap:14px}
+.field-row{display:flex;flex-direction:column;gap:6px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.opt-list{display:flex;flex-direction:column;gap:6px}
+.opt-item{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rsm);padding:7px 12px;transition:.15s}
+.opt-item:hover{border-color:var(--bhi)}
+.drag-h{color:var(--muted);font-size:11px;cursor:grab;flex-shrink:0}
+.opt-inp{flex:1;background:transparent;border:none;outline:none;font-family:var(--fb);font-size:13px;color:var(--text)}
+.opt-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;padding:2px 4px;border-radius:3px;opacity:0;transition:.15s}
+.opt-item:hover .opt-del{opacity:1}
+.opt-del:hover{color:var(--danger)}
+.add-opt-btn{display:flex;align-items:center;gap:5px;background:none;border:1.5px dashed var(--border);border-radius:var(--rsm);padding:7px 12px;width:100%;cursor:pointer;transition:.15s;font-family:var(--fb);font-size:12px;color:var(--muted)}
+.add-opt-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(91,62,248,.04)}
+
+/* Picture editor */
+.pic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.pic-slot{background:var(--surface2);border:1.5px dashed var(--border);border-radius:10px;overflow:hidden;aspect-ratio:1;position:relative;cursor:pointer;transition:.15s}
+.pic-slot:hover{border-color:var(--accent);background:rgba(91,62,248,.04)}
+.pic-slot img{width:100%;height:100%;object-fit:cover;display:block}
+.pic-slot-lbl{position:absolute;bottom:0;left:0;right:0;padding:5px 8px;background:rgba(255,255,255,.9);font-size:10px;font-weight:600;color:var(--text)}
+.pic-slot-ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:10px}
+.pic-slot-actions{position:absolute;top:4px;right:4px;display:flex;gap:3px;opacity:0;transition:.15s}
+.pic-slot:hover .pic-slot-actions{opacity:1}
+.add-pic-slot{background:var(--surface2);border:1.5px dashed var(--border);border-radius:10px;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:.15s;color:var(--muted);font-size:10px}
+.add-pic-slot:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(0,184,156,.05)}
+
+/* Matrix editor */
+.mat-editor .ed-body{gap:0;padding:0}
+.mat-section{padding:20px 22px;border-bottom:1px solid var(--border)}
+.mat-section:last-child{border-bottom:none}
+.mat-cols-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.mat-col-chip{display:flex;align-items:center;gap:4px;background:var(--surface2);border:1.5px solid var(--border);border-radius:6px;padding:4px 9px;font-size:12px}
+.mat-col-inp{border:none;background:transparent;outline:none;font-family:var(--fb);font-size:12px;color:var(--text);min-width:60px;max-width:110px}
+.mat-row-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;position:relative}
+.mat-row-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px}
+.mat-row-q{flex:1;font-size:13px;font-weight:600;color:var(--text)}
+.mat-row-type-badge{font-size:9px;font-weight:600;color:#f07000;background:rgba(255,150,0,.1);border:1px solid rgba(255,150,0,.2);border-radius:100px;padding:2px 8px;letter-spacing:.04em;text-transform:uppercase;flex-shrink:0}
+.mat-preview{display:grid;gap:2px;font-size:10px;overflow-x:auto}
+.mat-preview-hd{display:contents}
+.mat-preview-cell{background:var(--surface3);border-radius:4px;padding:3px 6px;text-align:center;color:var(--muted);font-weight:600}
+.mat-preview-row-lbl{background:var(--surface3);border-radius:4px;padding:3px 8px;color:var(--text);font-weight:600;white-space:nowrap}
+.mat-preview-input{background:rgba(91,62,248,.07);border-radius:4px;padding:3px 6px;text-align:center;color:var(--accent);font-weight:600}
+
+/* Logic */
+.logic-wrap{border-top:1.5px solid var(--border);padding:14px 22px;background:var(--surface2)}
+.logic-title{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.logic-rule{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rsm);padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.logic-rule select{background:var(--surface);border:1.5px solid var(--border);border-radius:6px;padding:4px 8px;font-family:var(--fb);font-size:11px;color:var(--text);outline:none}
+.logic-rule select:focus{border-color:var(--accent)}
+.logic-arrow{font-size:11px;color:var(--muted);flex-shrink:0}
+
+/* Drawing */
+.drawing-area{border:1.5px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);position:relative}
+.draw-canvas{display:block;touch-action:none;cursor:crosshair}
+.draw-tools{display:flex;align-items:center;gap:5px;padding:7px 10px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--surface2)}
+.draw-tool-btn{width:28px;height:28px;border-radius:6px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:.15s;color:var(--muted)}
+.draw-tool-btn:hover,.draw-tool-btn.active{border-color:var(--accent);background:rgba(91,62,248,.08);color:var(--accent)}
+.draw-color-swatch{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:.15s;flex-shrink:0}
+.draw-color-swatch:hover{transform:scale(1.15)}
+.draw-color-swatch.active{border-color:var(--accent);box-shadow:0 0 0 1.5px white}
+.draw-size-inp{width:48px;background:var(--surface);border:1.5px solid var(--border);border-radius:4px;padding:2px 6px;font-size:11px;color:var(--text);font-family:var(--fb);outline:none}
+.draw-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.sec-q-list{display:flex;flex-direction:column;gap:6px;padding:10px 0}
+.sec-q-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rsm);padding:9px 12px;display:flex;align-items:center;gap:8px;transition:.15s}
+.sec-q-card:hover{border-color:var(--bhi)}
+
+/* ══════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════ */
+.p-right{width:258px;flex-shrink:0;background:var(--surface);border-left:1.5px solid var(--border);overflow-y:auto;padding:14px;box-shadow:-2px 0 8px rgba(0,0,0,.04)}
+.s-title{font-family:var(--fd);font-size:12px;font-weight:600;margin-bottom:10px;padding-bottom:8px;border-bottom:1.5px solid var(--border);letter-spacing:.02em;color:var(--text)}
+.color-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:10px}
+.cs{width:28px;height:28px;border-radius:6px;cursor:pointer;transition:.15s;border:2.5px solid transparent}
+.cs:hover{transform:scale(1.1)}
+.cs.sel{border-color:var(--text);box-shadow:0 0 0 1.5px var(--accent)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface2);border-radius:var(--rsm);margin-bottom:6px;border:1px solid var(--border)}
+.sr-label{font-size:12px;font-weight:600;color:var(--text)}
+.sr-desc{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* CSV toolbar */
+.csv-toolbar{display:flex;gap:6px;flex-wrap:wrap;padding:10px 0 4px}
+.csv-toolbar .btn{font-size:11px;padding:5px 11px}
+
+/* ══════════════════════════════════════
+   RESULTS
+══════════════════════════════════════ */
+.results-body{flex:1;overflow-y:auto;padding:32px}
+.results-hd{max-width:880px;margin:0 auto 22px;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.results-title{font-family:var(--fd);font-size:24px;font-weight:600;color:var(--text)}
+.stat-grid{max-width:880px;margin:0 auto 22px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}
+.stat-val{font-family:var(--fd);font-size:30px;font-weight:600;margin-bottom:2px}
+.stat-lbl{font-size:11px;color:var(--muted)}
+.resp-table{max-width:880px;margin:0 auto}
+.resp-entry{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--shadow)}
+.resp-meta{font-size:11px;color:var(--muted);margin-bottom:10px;font-weight:500}
+.resp-row{font-size:12px;display:grid;grid-template-columns:180px 1fr;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+.resp-row:last-child{border-bottom:none}
+.resp-q{color:var(--muted);font-weight:500}
+.resp-a{color:var(--text);font-weight:600}
+.gcp-banner{background:rgba(0,184,156,.05);border:1.5px solid rgba(0,184,156,.2);border-radius:var(--r);padding:14px;margin-bottom:16px;font-size:12px;line-height:1.6;color:var(--muted)}
+.gcp-banner h4{font-family:var(--fd);font-size:13px;font-weight:600;color:var(--accent2);margin-bottom:5px}
+
+/* ══════════════════════════════════════
+   PREVIEW
+══════════════════════════════════════ */
+#preview{display:flex;flex-direction:column;height:100vh;background:var(--bg)}
+.prev-nav{background:var(--surface);border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;flex-shrink:0;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.prog-bar{height:3px;background:var(--surface3);flex-shrink:0;position:relative;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s var(--ease);position:absolute;left:0;top:0}
+.form-view{flex:1;overflow:hidden;position:relative}
+
+/* Slides */
+.form-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;opacity:0;pointer-events:none;transition:opacity .35s var(--ease),transform .35s var(--ease)}
+.form-slide.active{opacity:1;transform:none;pointer-events:all}
+.form-slide.slide-up{transform:translateY(28px)}
+.form-slide.slide-down{transform:translateY(-28px)}
+
+.section-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;padding:0;opacity:0;pointer-events:none;transition:opacity .35s var(--ease),transform .35s var(--ease)}
+.section-slide.active{opacity:1;transform:none;pointer-events:all}
+.section-slide.slide-up{transform:translateY(28px)}
+.section-slide.slide-down{transform:translateY(-28px)}
+.section-slide-inner{width:100%;max-width:700px;margin:0 auto;padding:32px 24px;overflow-y:auto;height:100%;display:flex;flex-direction:column}
+.section-header{margin-bottom:28px;padding-bottom:20px;border-bottom:1.5px solid var(--border)}
+.section-qs{display:flex;flex-direction:column;gap:32px;flex:1}
+
+.welcome-canvas-display{width:100%;max-width:620px;margin:0 auto 24px;border-radius:14px;overflow:hidden;display:block;box-shadow:var(--shadow)}
+
+.slide-inner{width:100%;max-width:640px}
+.slide-num{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.slide-num::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.slide-q{font-family:var(--fd);font-size:clamp(21px,3.2vw,34px);font-weight:600;letter-spacing:-.5px;line-height:1.2;margin-bottom:6px;color:var(--text)}
+.slide-desc{font-size:14px;color:var(--muted);margin-bottom:22px;line-height:1.6}
+
+.welcome-title{font-family:var(--fd);font-size:clamp(26px,4.5vw,50px);font-weight:600;letter-spacing:-1.5px;line-height:1.1;margin-bottom:12px;text-align:center;word-break:break-word;color:var(--text)}
+.welcome-sub{font-size:16px;color:var(--muted);line-height:1.7;text-align:center;max-width:500px;margin:0 auto 32px}
+
+/* Input styles */
+.s-input{width:100%;background:transparent;border:none;border-bottom:2px solid var(--border);padding:9px 2px;font-family:var(--fb);font-size:16px;color:var(--text);outline:none;transition:.18s}
+.s-input:focus{border-bottom-color:var(--accent)}
+.s-input::placeholder{color:rgba(0,0,0,.22)}
+textarea.s-input{min-height:72px;resize:none;padding:9px 2px}
+
+/* Choice */
+.s-opts{display:flex;flex-direction:column;gap:8px}
+.s-opt{display:flex;align-items:center;gap:12px;background:var(--surface);border:2px solid var(--border);border-radius:11px;padding:12px 16px;cursor:pointer;transition:all .15s;font-size:14px;user-select:none;color:var(--text);box-shadow:var(--shadow)}
+.s-opt:hover{border-color:var(--accent);background:rgba(91,62,248,.03);transform:translateX(3px)}
+.s-opt.selected{border-color:var(--accent);background:rgba(91,62,248,.06)}
+.opt-key{width:26px;height:26px;border-radius:7px;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;flex-shrink:0;font-family:var(--fd);color:var(--muted);transition:.15s}
+.s-opt.selected .opt-key{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* Multi-buttons */
+.mb-grid{display:flex;flex-wrap:wrap;gap:8px}
+.mb-btn{padding:9px 18px;border-radius:100px;background:var(--surface);border:2px solid var(--border);cursor:pointer;font-family:var(--fb);font-size:13px;font-weight:600;color:var(--text);transition:all .15s;user-select:none;box-shadow:var(--shadow)}
+.mb-btn:hover{border-color:var(--accent);background:rgba(91,62,248,.04);transform:scale(1.03)}
+.mb-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 12px var(--glow)}
+.mb-btn.selected::before{content:'✓ ';font-size:10px}
+@keyframes mbPop{0%{transform:scale(.9)}60%{transform:scale(1.06)}100%{}}
+.mb-btn.pop{animation:mbPop .18s var(--ease)}
+
+/* Three options */
+.three-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.three-btn{padding:18px 10px;border-radius:13px;background:var(--surface);border:2px solid var(--border);cursor:pointer;font-family:var(--fb);font-size:12px;font-weight:600;color:var(--text);text-align:center;transition:all .18s;user-select:none;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:var(--shadow)}
+.three-btn .t-ico{font-size:26px;line-height:1}
+.three-btn:hover{border-color:var(--accent);background:rgba(91,62,248,.04);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.1)}
+.three-btn.selected{border-color:var(--accent);background:rgba(91,62,248,.08);box-shadow:0 0 0 3px rgba(91,62,248,.15)}
+@keyframes threeSelect{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{}}
+.three-btn.pop{animation:threeSelect .2s var(--ease)}
+
+/* Pic buttons */
+.pic-btns-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.pic-btn-card{border-radius:13px;overflow:hidden;background:var(--surface);border:2px solid var(--border);cursor:pointer;transition:all .18s;user-select:none;box-shadow:var(--shadow)}
+.pic-btn-card img{width:100%;height:100px;object-fit:cover;display:block;transition:transform .25s}
+.pic-btn-card:hover img{transform:scale(1.04)}
+.pic-btn-card:hover{border-color:var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.1)}
+.pic-btn-card.selected{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(0,184,156,.2)}
+.pic-btn-wrap{position:relative}
+.pic-check{position:absolute;top:7px;right:7px;width:22px;height:22px;border-radius:50%;background:var(--accent2);display:none;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;box-shadow:0 2px 6px rgba(0,184,156,.3)}
+.pic-btn-card.selected .pic-check{display:flex}
+.pic-btn-lbl{padding:8px 10px;font-size:12px;font-weight:600;text-align:center;background:var(--surface2);border-top:1px solid var(--border);color:var(--text)}
+.pic-btn-card.selected .pic-btn-lbl{color:var(--accent2)}
+
+/* Dropdown */
+.custom-drop-wrap{position:relative}
+.custom-drop-trigger{width:100%;background:var(--surface);border:2px solid var(--border);border-radius:11px;padding:12px 16px;font-family:var(--fb);font-size:14px;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:.18s;user-select:none;box-shadow:var(--shadow)}
+.custom-drop-trigger.has-val{color:var(--text)}
+.custom-drop-trigger:hover{border-color:var(--bhi)}
+.custom-drop-trigger.open{border-color:var(--accent);border-bottom-left-radius:0;border-bottom-right-radius:0}
+.drop-arrow{font-size:11px;color:var(--muted);transition:transform .2s}
+.custom-drop-trigger.open .drop-arrow{transform:rotate(180deg)}
+.custom-drop-menu{position:absolute;top:100%;left:0;right:0;z-index:50;background:var(--surface);border:2px solid var(--accent);border-top:none;border-bottom-left-radius:11px;border-bottom-right-radius:11px;max-height:0;overflow:hidden;transition:max-height .28s var(--ease);box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.custom-drop-menu.open{max-height:240px;overflow-y:auto}
+.drop-opt{padding:11px 16px;font-size:13px;cursor:pointer;transition:background .12s;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;color:var(--text)}
+.drop-opt:last-child{border-bottom:none}
+.drop-opt:hover{background:rgba(91,62,248,.06);color:var(--accent)}
+.drop-opt.sel{background:rgba(0,184,156,.07);color:var(--accent2);font-weight:600}
+.drop-dot{width:5px;height:5px;border-radius:50%;background:var(--accent2);opacity:0;flex-shrink:0}
+.drop-opt.sel .drop-dot{opacity:1}
+
+/* Rating */
+.s-rating{display:flex;gap:7px;flex-wrap:wrap}
+.rate-btn{width:44px;height:44px;border-radius:10px;background:var(--surface);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:14px;font-weight:600;cursor:pointer;transition:all .13s;color:var(--muted);box-shadow:var(--shadow)}
+.rate-btn:hover{border-color:var(--accent);color:var(--accent);transform:scale(1.07)}
+.rate-btn.sel{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 12px var(--glow)}
+
+/* Scale */
+.scale-val-display{font-family:var(--fd);font-size:24px;font-weight:600;color:var(--accent);margin-bottom:12px}
+.custom-range{width:100%;-webkit-appearance:none;appearance:none;height:5px;border-radius:5px;outline:none;cursor:pointer;background:linear-gradient(90deg,var(--accent) calc(var(--pct,50%)*1%),var(--surface3) calc(var(--pct,50%)*1%))}
+.custom-range::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 2px 8px var(--glow),0 1px 4px rgba(0,0,0,.15);border:2.5px solid #fff;transition:transform .12s}
+.custom-range::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.scale-labels{display:flex;justify-content:space-between;margin-top:8px}
+.scale-lbl{font-size:11px;color:var(--muted);font-weight:600}
+
+/* Date */
+.date-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.date-part-lbl{font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.date-sel{width:100%;background:var(--surface);border:2px solid var(--border);border-radius:10px;padding:10px 12px;font-family:var(--fd);font-size:15px;color:var(--text);outline:none;cursor:pointer;transition:.15s;appearance:none;text-align:center;font-weight:600;box-shadow:var(--shadow)}
+.date-sel:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.date-display{font-family:var(--fd);font-size:16px;font-weight:600;color:var(--accent);margin-top:10px;min-height:24px}
+
+/* Matrix preview in form */
+.matrix-table-wrap{overflow-x:auto;border-radius:12px;border:1.5px solid var(--border);box-shadow:var(--shadow)}
+.matrix-table{width:100%;border-collapse:collapse;background:var(--surface)}
+.matrix-table th{background:var(--surface2);padding:10px 14px;text-align:center;font-size:12px;font-weight:600;color:var(--text);border-bottom:2px solid var(--border);border-right:1px solid var(--border);white-space:nowrap}
+.matrix-table th:first-child{text-align:left;min-width:140px;border-right:2px solid var(--border)}
+.matrix-table td{padding:9px 12px;text-align:center;border-bottom:1px solid var(--border);border-right:1px solid var(--border);vertical-align:middle;font-size:13px}
+.matrix-table td:first-child{text-align:left;font-weight:600;color:var(--text);background:var(--surface2);border-right:2px solid var(--border);font-size:12px}
+.matrix-table tr:last-child td{border-bottom:none}
+.matrix-table tr:hover td{background:rgba(91,62,248,.03)}
+.matrix-table tr:hover td:first-child{background:var(--surface3)}
+/* matrix input cells */
+.mat-cell-short{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:5px 8px;font-family:var(--fb);font-size:12px;outline:none;transition:.15s;background:var(--surface);color:var(--text)}
+.mat-cell-short:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--glow)}
+.mat-cell-num{width:70px;border:1.5px solid var(--border);border-radius:6px;padding:5px 8px;font-family:var(--fd);font-size:13px;font-weight:600;outline:none;transition:.15s;background:var(--surface);color:var(--text);text-align:center}
+.mat-cell-num:focus{border-color:var(--accent)}
+.mat-cell-chk{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+.mat-cell-radio{width:18px;height:18px;accent-color:var(--accent);cursor:pointer}
+.mat-star-row{display:flex;gap:3px;justify-content:center}
+.mat-star{font-size:16px;cursor:pointer;color:var(--surface3);transition:.12s;line-height:1}
+.mat-star.lit{color:#f5a623}
+.mat-star:hover,.mat-star:hover~.mat-star{color:var(--surface3)}
+.mat-stars:hover .mat-star{color:#f5a623}
+.mat-stars .mat-star:hover~.mat-star{color:var(--surface3)}
+.mat-cell-range{width:100%;max-width:100px;accent-color:var(--accent)}
+
+/* Req badge */
+.req-badge{display:inline-flex;align-items:center;background:rgba(224,62,62,.07);border:1px solid rgba(224,62,62,.2);color:var(--danger);border-radius:100px;padding:2px 7px;font-size:9px;font-weight:600;margin-left:7px;vertical-align:middle}
+
+/* Nav buttons */
+.btn-next{background:linear-gradient(135deg,var(--accent),#7c5cfc);border:none;border-radius:11px;padding:12px 24px;font-family:var(--fb);font-size:14px;font-weight:600;color:#fff;cursor:pointer;transition:.18s;box-shadow:0 3px 14px var(--glow);display:flex;align-items:center;gap:7px}
+.btn-next:hover{transform:translateY(-2px);box-shadow:0 6px 22px var(--glow)}
+.btn-submit{background:linear-gradient(135deg,var(--accent2),#00d4b4);box-shadow:0 3px 14px rgba(0,184,156,.3)}
+.btn-submit:hover{box-shadow:0 6px 22px rgba(0,184,156,.4)}
+.btn-back{background:var(--surface);border:2px solid var(--border);border-radius:11px;padding:10px 16px;font-family:var(--fb);font-size:14px;color:var(--muted);cursor:pointer;transition:.15s;box-shadow:var(--shadow)}
+.btn-back:hover{background:var(--surface2);color:var(--text)}
+.btn-skip{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;padding:4px;transition:.15s;font-weight:600}
+.btn-skip:hover{color:var(--text)}
+.s-nav{display:flex;align-items:center;gap:10px;margin-top:24px;flex-wrap:wrap}
+.kbd-hint{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);margin-top:8px;font-weight:500}
+kbd{background:var(--surface2);border:1.5px solid var(--border);border-radius:4px;padding:1px 5px;font-size:9px;font-family:var(--fd);color:var(--text)}
+
+/* Thank you */
+.ty-icon{width:68px;height:68px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),#00d4b4);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px;box-shadow:0 0 40px rgba(0,184,156,.22);animation:popIn .45s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes popIn{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+.ty-title{font-family:var(--fd);font-size:clamp(24px,4vw,38px);font-weight:600;letter-spacing:-1px;margin-bottom:8px;animation:fadeUp .4s .1s ease both;word-break:break-word;text-align:center;color:var(--text)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Save progress banner */
+.resume-banner{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:16px 20px;max-width:500px;margin:0 auto 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.rb-title{font-weight:600;color:var(--text);margin-bottom:2px;font-size:13px}
+.rb-meta{color:var(--muted);font-size:12px}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--text);color:var(--surface);border-radius:10px;padding:9px 18px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 6px 28px rgba(0,0,0,.18);opacity:0;transition:all .25s var(--ease);z-index:9999;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.shake{animation:shake .3s}
+
+/* Modal */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center}
+.modal-ov.show{display:flex}
+.modal{background:var(--surface);border:1.5px solid var(--border);border-radius:18px;padding:30px;max-width:480px;width:92%;animation:fadeUp .28s ease both;box-shadow:var(--shadow-lg)}
+.modal-title{font-family:var(--fd);font-size:20px;font-weight:600;margin-bottom:5px;letter-spacing:-.5px;color:var(--text)}
+.share-row{display:flex;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--rsm);overflow:hidden;margin:12px 0}
+.share-row input{flex:1;background:transparent;border:none;outline:none;padding:10px 13px;font-family:var(--fb);font-size:12px;color:var(--text)}
+.share-row button{background:var(--accent);border:none;padding:10px 14px;color:#fff;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--fb);transition:.15s;flex-shrink:0}
+.share-row button:hover{background:#7c5cfc}
+
+/* Pill */
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:600;border:1px solid transparent}
+.pill-green{background:rgba(0,184,156,.09);color:var(--accent2);border-color:rgba(0,184,156,.2)}
+.pill-purple{background:rgba(91,62,248,.09);color:var(--accent);border-color:rgba(91,62,248,.2)}
+.pill-orange{background:rgba(255,150,0,.1);color:#f07000;border-color:rgba(255,150,0,.25)}
+
+/* Empty state */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:40px;min-height:200px}
+.empty-ico{font-size:36px;margin-bottom:12px;opacity:.35}
+.empty-ttl{font-family:var(--fd);font-size:16px;font-weight:600;margin-bottom:5px;color:var(--text)}
+.empty-sub{font-size:12px}
+
+/* CSV import panel */
+.import-drop-zone{border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:.18s;background:var(--surface2)}
+.import-drop-zone:hover,.import-drop-zone.drag-over{border-color:var(--accent);background:rgba(91,62,248,.04)}
+.import-drop-zone .idz-ico{font-size:30px;margin-bottom:8px}
+.import-drop-zone .idz-txt{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.import-drop-zone .idz-sub{font-size:11px;color:var(--muted)}
+.import-preview{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:14px;max-height:240px;overflow-y:auto}
+.import-preview table{width:100%;border-collapse:collapse;font-size:11px}
+.import-preview th{background:var(--surface3);padding:5px 8px;text-align:left;font-weight:600;color:var(--text);border-bottom:1px solid var(--border)}
+.import-preview td{padding:4px 8px;border-bottom:1px solid var(--border);color:var(--muted)}
+.import-preview tr:last-child td{border-bottom:none}
+
+@media(max-width:760px){
+  .p-left,.p-right{display:none}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .three-grid{grid-template-columns:1fr}
+  .date-grid{grid-template-columns:1fr 1fr 1fr}
+}
+.drop-target {
+  border-top: 2px solid var(--accent) !important;
+  background: rgba(91,62,248,.05) !important;
+}
 </style>
 </head>
 <body>
 
-<header>
-  <h1>TASX Software Feedback</h1>
-  <p style="margin:6px 0 0; font-size:.88rem; opacity:.95;">Allowing us to know better about your work, and further expectations</p>
-</header>
+<!-- ════════════════════════════════════
+     BUILDER
+════════════════════════════════════ -->
 
-<div class="top-controls">
-  <div class="company-group">
-    <label for="companyName">Your Name:</label>
-    <input type="text" id="companyName" placeholder="Enter name…" />
+
+<!-- PREVIEW -->
+<div id="preview" class="" style="display: flex;">
+  <div class="prev-nav">
+    <div class="logo" style="font-size:17px;gap:7px"><div class="logo-i" style="width:24px;height:24px;font-size:12px">⚡</div>Form<span>Flow</span></div>
+    <div id="prevTitle" style="font-family:var(--fd);font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px;color:var(--text)"></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      
+      
+    </div>
   </div>
-  <div class="btn-group">
-    <button id="addProject" class="add">+ Add Project</button>
-    <button id="removeProject" class="remove">− Remove Project</button>
-    <button id="resetBtn" class="reset">Reset</button>
-  </div>
+  <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  <div class="form-view" id="formView"></div>
 </div>
 
-<!-- FULL WIDTH, HORIZONTAL SCROLL, FROZEN FIRST COLUMN -->
-<div class="table-container">
-  <div class="table-wrap">
-    <table id="matrixTable" role="grid" aria-label="Survey matrix">
-      <thead id="matrixHead"></thead>
-      <tbody id="matrixBody"></tbody>
-    </table>
-  </div>
-</div>
+<!-- Share Modal -->
 
-<div class="submit-row">
-  <button id="submitBtn" class="submit-btn">Submit</button>
-</div>
 
-<div id="success" class="success-alert">Submission done</div>
+<div class="toast" id="toast"></div>
 
 <script>
-/* ---------- Configuration ---------- */
-const QUESTIONS = [
-  "Project Settings",
-  "AI Beam Cross Section (the entire project)",
-  "Smart Tables (the entire project)",
-  "Wall Edit Section (the entire project)",
-  "Column Edit Section (the entire project)",
-  "Slab Parametric Rebar (the entire project)",
-  "Efficiency"
-];
-const STORAGE_KEY = "survey_matrix_poc_v1_base";
+/* ════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════ */
+const S = {
+  items: [],
+  activeId: null,
+  editingScreen: null,
+  settings: {
+    title: 'Untitled Form',
+    accent: '#5b3ef8',
+    font: 'Syne',
+    welcome: { title: 'Welcome! 👋', subtitle: 'This form will only take a few minutes.', buttonText: "Let's go →", drawing: null },
+    end: { title: 'All done! 🎉', subtitle: 'Thank you so much for your responses.', drawing: null },
+  },
+  responses: [],
+  views: 0,
+  currentSlide: 0,
+  answers: {},
+  submitted: false,
+};
 
-/* ---------- State ---------- */
-let state = { companyName: "", projects: [] };
+const TYPES = {
+  short:{label:'Short Text',icon:'✏️'},
+  long:{label:'Long Text',icon:'📝'},
+  choice:{label:'Choice',icon:'☑️'},
+  multibutton:{label:'Multi-Buttons',icon:'🔘'},
+  three:{label:'3 Options',icon:'⚡'},
+  picturebutton:{label:'Pic Buttons',icon:'🖼️'},
+  dropdown:{label:'Dropdown',icon:'▾'},
+  rating:{label:'Rating',icon:'⭐'},
+  scale:{label:'Scale',icon:'↔️'},
+  yesno:{label:'Yes / No',icon:'🔀'},
+  email:{label:'Email',icon:'📧'},
+  number:{label:'Number',icon:'🔢'},
+  date:{label:'Date',icon:'📅'},
+};
 
-/* ---------- Init ---------- */
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      state = JSON.parse(raw);
-      if(!Array.isArray(state.projects)) state.projects = [];
+// Matrix row types
+const MAT_ROW_TYPES = ['short','number','checkbox','radio','rating','scale'];
+
+const uid = () => Math.random().toString(36).slice(2,9);
+const esc = s => s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+window.onload = () => {
+  try {
+    const d = JSON.parse(localStorage.getItem('ff_builder_draft')||'null');
+    if (d?.items && d?.settings) {
+      S.items = d.items; Object.assign(S.settings, d.settings);
+      document.getElementById('formTitle').value = S.settings.title;
+      applyStyleSettings();
+      S.activeId = S.items[0]?.id || null;
     }
-  }catch(e){
-    console.warn("load parse error", e);
-    state = { companyName: "", projects: [] };
-  }
-  if(state.projects.length === 0){
-    state.projects = [
-      { name: "Project 1", screenshot: null, screenshotName: "", answers: {} },
-      { name: "Project 2", screenshot: null, screenshotName: "", answers: {} },
-      { name: "Project 3", screenshot: null, screenshotName: "", answers: {} }
-    ];
-  }
-  const companyEl = document.getElementById('companyName');
-  if(companyEl) companyEl.value = state.companyName || "";
+  } catch(e){}
+  if (!S.items.length) addDefaultContent();
+  renderAll();
+};
+
+function addDefaultContent() {
+  S.items.push({ id:uid(), kind:'question', type:'short', question:"What's your name?", description:"We'd love to know who we're talking to.", required:true });
+  S.items.push({ id:uid(), kind:'question', type:'choice', question:'How did you hear about us?', description:'', options:['Social media','Friend','Search engine','Other'], multiple:false, other:false });
+  const sid = uid();
+  S.items.push({ id:sid, kind:'section', title:'Your Experience', description:'Tell us how it went', logic:[] });
+  S.items.push({ id:uid(), kind:'question', sectionId:sid, type:'rating', question:'How would you rate your overall experience?', description:'10 = amazing!', ratingMax:10 });
+  S.items.push({ id:uid(), kind:'question', sectionId:sid, type:'long', question:'Any additional comments?', description:'We read every response.' });
+  const matId = uid();
+  S.items.push({ id:matId, kind:'matrix',
+    title:'Product Feedback Matrix',
+    description:'Rate each product across the dimensions below',
+    columns:['Quality','Value','Design'],
+    rows:[
+      {id:uid(), label:'Product A', type:'rating'},
+      {id:uid(), label:'Product B', type:'rating'},
+      {id:uid(), label:'Product C', type:'radio'},
+    ]
+  });
+  S.activeId = S.items[0].id;
 }
-loadState();
 
-/* ---------- Helpers ---------- */
-function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function escapeHtml(s){ return String(s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;"); }
-function showSuccess(){ const el = document.getElementById("success"); el.classList.add("show"); setTimeout(()=>el.classList.remove("show"),2200); }
+/* ════════════════════════════════════════════
+   TAB SWITCHING
+════════════════════════════════════════════ */
+function switchTab(t) {
+  ['build','preview','results'].forEach(tab => document.getElementById(`tab-${tab}`)?.classList.toggle('active', tab===t));
+  document.getElementById('area-build').classList.toggle('hidden', t!=='build');
+  document.getElementById('area-results').classList.toggle('hidden', t!=='results');
+  const prev = document.getElementById('preview');
+  const bld = document.getElementById('builder');
+  if (t==='preview') { bld.style.display='none'; prev.style.display='flex'; prev.classList.remove('hidden'); launchPreview(); }
+  else { prev.style.display='none'; prev.classList.add('hidden'); bld.style.display='flex'; }
+  if (t==='results') renderResults();
+}
 
-/* ---------- Rendering ---------- */
-const headEl = document.getElementById("matrixHead");
-const bodyEl = document.getElementById("matrixBody");
+function backToBuilder() {
+  document.getElementById('preview').style.display='none';
+  document.getElementById('preview').classList.add('hidden');
+  document.getElementById('builder').style.display='flex';
+  ['build','preview','results'].forEach(t => document.getElementById(`tab-${t}`)?.classList.remove('active'));
+  document.getElementById('tab-build').classList.add('active');
+  document.getElementById('area-build').classList.remove('hidden');
+  document.getElementById('area-results').classList.add('hidden');
+}
 
-function renderHeader(){
-  headEl.innerHTML = "";
-  const tr = document.createElement("tr");
-  const th0 = document.createElement("th"); th0.textContent = "Questions"; tr.appendChild(th0);
+/* ════════════════════════════════════════════
+   RENDER
+════════════════════════════════════════════ */
+function renderAll() { renderQList(); renderEditor(); }
 
-  state.projects.forEach((p, idx) => {
-    const th = document.createElement("th");
-    th.className = "project-header-cell";
-    th.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:6px;">
-        <div contenteditable="true" class="proj-name" data-proj="${idx}" aria-label="Project name">${escapeHtml(p.name)}</div>
-        <div class="proj-upload-wrap">
-          <button class="proj-upload" data-proj="${idx}">Upload screenshot</button>
-          ${p.screenshotName ? `<span class="proj-filename">${escapeHtml(p.screenshotName)}</span>` : ""}
-        </div>
+function renderQList() {
+  const el = document.getElementById('qList');
+  let html = '';
+  html += `<div class="screen-list-item ${S.editingScreen==='welcome'?'active':''}" onclick="editScreen('welcome')"><span class="screen-list-icon">🏠</span><span>Welcome Screen</span></div>`;
+  const rendered = new Set();
+  let qNum = 0;
+
+  // Helper to attach drag events to list items
+  const dragEvents = (id) => `draggable="true" ondragstart="dragStart(event, '${id}')" ondragend="dragEnd(event)" ondragover="dragOver(event)" ondrop="dropItemOn(event, '${id}')"`;
+
+  S.items.forEach(item => {
+    if (rendered.has(item.id)) return;
+    if (item.kind==='section') {
+      rendered.add(item.id);
+      const children = S.items.filter(q=>q.kind==='question'&&q.sectionId===item.id);
+      html += `<div class="sec-item ${S.activeId===item.id&&!S.editingScreen?'active':''}" onclick="setActive('${item.id}')" ${dragEvents(item.id)}>
+        <div class="sec-icon">§</div>
+        <div class="q-info"><div class="q-type-lbl">Section</div><div class="q-lbl">${esc(item.title||'Untitled Section')}</div></div>
+        <button class="q-del" onclick="event.stopPropagation();delItem('${item.id}')">✕</button>
+      </div><div class="sec-children">`;
+      children.forEach(cq => { rendered.add(cq.id); qNum++;
+        html += `<div class="sec-q-item ${S.activeId===cq.id&&!S.editingScreen?'active':''}" onclick="setActive('${cq.id}')" ${dragEvents(cq.id)}>
+          <div class="q-num" style="font-size:9px">${qNum}</div>
+          <div class="q-info"><div class="q-type-lbl">${TYPES[cq.type]?.icon} ${TYPES[cq.type]?.label||cq.type}</div><div class="q-lbl">${esc(cq.question||'Untitled')}</div></div>
+          <button class="q-del" onclick="event.stopPropagation();delItem('${cq.id}')">✕</button>
+        </div>`;
+      });
+      html += `</div>`;
+    } else if (item.kind==='matrix') {
+      rendered.add(item.id);
+      html += `<div class="mat-item ${S.activeId===item.id&&!S.editingScreen?'active':''}" onclick="setActive('${item.id}')" ${dragEvents(item.id)}>
+        <div class="mat-icon">⊞</div>
+        <div class="q-info"><div class="q-type-lbl">Matrix · ${(item.rows||[]).length} rows</div><div class="q-lbl">${esc(item.title||'Untitled Matrix')}</div></div>
+        <button class="q-del" onclick="event.stopPropagation();delItem('${item.id}')">✕</button>
       </div>`;
-    tr.appendChild(th);
+    } else if (!item.sectionId) {
+      rendered.add(item.id); qNum++;
+      html += `<div class="q-item ${S.activeId===item.id&&!S.editingScreen?'active':''}" onclick="setActive('${item.id}')" ${dragEvents(item.id)}>
+        <div class="q-num">${qNum}</div>
+        <div class="q-info"><div class="q-type-lbl">${TYPES[item.type]?.icon} ${TYPES[item.type]?.label||item.type}</div><div class="q-lbl">${esc(item.question||'Untitled')}</div></div>
+        <button class="q-del" onclick="event.stopPropagation();delItem('${item.id}')">✕</button>
+      </div>`;
+    }
   });
-  headEl.appendChild(tr);
+  html += `<div class="screen-list-item ${S.editingScreen==='end'?'active':''}" onclick="editScreen('end')"><span class="screen-list-icon">🏁</span><span>Ending Screen</span></div>`;
+  el.innerHTML = html;
 }
 
-function renderBody(){
-  bodyEl.innerHTML = "";
-  QUESTIONS.forEach((q, qIdx) => {
-    const isDual = qIdx === 0 || qIdx === 6;
+function renderEditor() {
+  const stack = document.getElementById('editorStack');
+  if (S.editingScreen) { stack.innerHTML = renderScreenEditor(S.editingScreen); initDrawCanvas(S.editingScreen); return; }
+  const item = getActive();
+  if (!item) { stack.innerHTML=`<div class="empty-state"><div class="empty-ico">✏️</div><div class="empty-ttl">Select an item</div><div class="empty-sub">or add a question, section, or matrix</div></div>`; return; }
+  if (item.kind==='section') stack.innerHTML = renderSectionEditor(item);
+  else if (item.kind==='matrix') stack.innerHTML = renderMatrixEditor(item);
+  else stack.innerHTML = renderQEditor(item);
+  syncRightPanel();
+}
 
-    // Section title — FROZEN
-    const hr = document.createElement("tr");
-    const hc = document.createElement("td");
-    hc.className = "section-title";
-    hc.colSpan = state.projects.length + 1;
-    hc.textContent = `${qIdx + 1}. ${q}`;
-    hr.appendChild(hc);
-    bodyEl.appendChild(hr);
+/* ── Screen Editor ── */
+function editScreen(which) { S.editingScreen=which; S.activeId=null; renderAll(); }
 
-    // Time Taken
-    const trTime = document.createElement("tr");
-    const tdLabel = document.createElement("td"); tdLabel.textContent = "Time Taken"; trTime.appendChild(tdLabel);
-    state.projects.forEach((p, colIdx) => {
-      const td = document.createElement("td");
-      const ans = getAns(p, qIdx);
-      if (isDual) {
-        td.innerHTML = `
-          <div class="time-before-after">
-            <input type="text" class="input-before" data-q="${qIdx}" data-col="${colIdx}" placeholder="Before" value="${escapeHtml(ans.before)}">
-            <input type="text" class="input-after"  data-q="${qIdx}" data-col="${colIdx}" placeholder="After"  value="${escapeHtml(ans.after)}">
-          </div>`;
-      } else {
-        td.innerHTML = `
-          <div class="time-triple">
-            <input type="text" class="input-manual" data-q="${qIdx}" data-col="${colIdx}" placeholder="Manual" value="${escapeHtml(ans.manual || '')}">
-            <input type="text" class="input-trb"    data-q="${qIdx}" data-col="${colIdx}" placeholder="TRB"    value="${escapeHtml(ans.trb || '')}">
-            <input type="text" class="input-tasx"  data-q="${qIdx}" data-col="${colIdx}" placeholder="TASX"  value="${escapeHtml(ans.tasx || '')}">
-          </div>`;
+function renderScreenEditor(which) {
+  const isW = which==='welcome';
+  const sc = isW ? S.settings.welcome : S.settings.end;
+  const badgeCls = isW ? 'welcome-badge' : 'end-badge';
+  return `<div class="screen-editor">
+    <div class="ed-head">
+      <div class="type-badge ${badgeCls}">${isW?'🏠 Welcome Screen':'🏁 Ending Screen'}</div>
+      <div style="font-size:11px;color:var(--muted)">${isW?'First slide respondents see':'Shown after form submits — no submit button'}</div>
+    </div>
+    <div class="ed-body">
+      <div class="field-row"><label class="lbl">Headline</label>
+        <input class="fi" value="${esc(sc.title)}" oninput="updScreen('${which}','title',this.value)" placeholder="Main title text"></div>
+      <div class="field-row"><label class="lbl">Subtitle / Description</label>
+        <textarea class="fi" oninput="updScreen('${which}','subtitle',this.value)">${esc(sc.subtitle)}</textarea></div>
+      ${isW?`<div class="field-row"><label class="lbl">Start Button Text</label>
+        <input class="fi" value="${esc(sc.buttonText||"Let's go →")}" oninput="updScreen('welcome','buttonText',this.value)"></div>`:''}
+      <div class="field-row"><label class="lbl">Drawing / Decoration</label>
+        <div class="drawing-area">
+          <div class="draw-tools" id="dt-${which}">
+            <button class="draw-tool-btn active" onclick="setDrawTool('${which}','pen',this)" title="Pen">✏️</button>
+            <button class="draw-tool-btn" onclick="setDrawTool('${which}','line',this)" title="Line">⟋</button>
+            <button class="draw-tool-btn" onclick="setDrawTool('${which}','rect',this)" title="Rect">▭</button>
+            <button class="draw-tool-btn" onclick="setDrawTool('${which}','circle',this)" title="Circle">◯</button>
+            <button class="draw-tool-btn" onclick="setDrawTool('${which}','arrow',this)" title="Arrow">→</button>
+            <button class="draw-tool-btn" onclick="setDrawTool('${which}','text',this)" title="Text">T</button>
+            <button class="draw-tool-btn" onclick="setDrawTool('${which}','eraser',this)" title="Eraser">🧹</button>
+            <div class="draw-sep"></div>
+            ${['#1a1a2e','#5b3ef8','#00b89c','#e03e3e','#d4890a','#0088cc','#e06e9f'].map(c=>`<div class="draw-color-swatch ${c==='#1a1a2e'?'active':''}" style="background:${c}" onclick="setDrawColor('${which}','${c}',this)"></div>`).join('')}
+            <div class="draw-sep"></div>
+            <input type="number" class="draw-size-inp" id="ds-${which}" value="3" min="1" max="40">
+            <div style="flex:1"></div>
+            <button class="btn-icon" onclick="clearDrawing('${which}')" title="Clear">🗑</button>
+          </div>
+          <canvas class="draw-canvas" id="dc-${which}" width="640" height="200"></canvas>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Draw decorations shown on the ${which} screen</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Draw engine ── */
+const drawState = {};
+function initDrawCanvas(which) {
+  const canvas = document.getElementById(`dc-${which}`);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const sc = which==='welcome' ? S.settings.welcome : S.settings.end;
+  canvas.width = canvas.parentElement.clientWidth || 640;
+  canvas.height = 200;
+  drawState[which] = {tool:'pen',color:'#1a1a2e',size:3,drawing:false,startX:0,startY:0,snapshot:null};
+  const ds = drawState[which];
+  ctx.fillStyle = '#f4f6fb'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  if (sc.drawing) { const img=new Image(); img.onload=()=>ctx.drawImage(img,0,0); img.src=sc.drawing; }
+
+  function getPos(e) {
+    const rect=canvas.getBoundingClientRect();
+    const cx=e.touches?e.touches[0].clientX:e.clientX, cy=e.touches?e.touches[0].clientY:e.clientY;
+    return {x:(cx-rect.left)*(canvas.width/rect.width),y:(cy-rect.top)*(canvas.height/rect.height)};
+  }
+  function startDraw(e) {
+    e.preventDefault(); const pos=getPos(e); ds.drawing=true; ds.startX=pos.x; ds.startY=pos.y;
+    ds.snapshot=ctx.getImageData(0,0,canvas.width,canvas.height);
+    if(ds.tool==='pen'||ds.tool==='eraser'){ctx.beginPath();ctx.moveTo(pos.x,pos.y);}
+    else if(ds.tool==='text'){const t=prompt('Text:','Label');if(t){ctx.font=`${Math.max(14,ds.size*4)}px ${S.settings.font||'Syne'}`;ctx.fillStyle=ds.color;ctx.fillText(t,pos.x,pos.y);saveDrawing(which,canvas);}ds.drawing=false;}
+  }
+  function draw(e) {
+    if(!ds.drawing) return; e.preventDefault(); const pos=getPos(e);
+    if(ds.tool==='pen'){ctx.lineWidth=ds.size;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=ds.color;ctx.lineTo(pos.x,pos.y);ctx.stroke();}
+    else if(ds.tool==='eraser'){ctx.lineWidth=ds.size*4;ctx.lineCap='round';ctx.globalCompositeOperation='destination-out';ctx.lineTo(pos.x,pos.y);ctx.stroke();ctx.globalCompositeOperation='source-over';}
+    else{
+      ctx.putImageData(ds.snapshot,0,0); ctx.strokeStyle=ds.color; ctx.fillStyle=ds.color; ctx.lineWidth=ds.size; ctx.setLineDash([]);
+      if(ds.tool==='line'){ctx.beginPath();ctx.moveTo(ds.startX,ds.startY);ctx.lineTo(pos.x,pos.y);ctx.stroke();}
+      else if(ds.tool==='rect'){ctx.strokeRect(ds.startX,ds.startY,pos.x-ds.startX,pos.y-ds.startY);}
+      else if(ds.tool==='circle'){const rx=Math.abs(pos.x-ds.startX)/2,ry=Math.abs(pos.y-ds.startY)/2,cx=ds.startX+(pos.x-ds.startX)/2,cy=ds.startY+(pos.y-ds.startY)/2;ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);ctx.stroke();}
+      else if(ds.tool==='arrow'){const dx=pos.x-ds.startX,dy=pos.y-ds.startY,ang=Math.atan2(dy,dx),hs=12+ds.size*2;ctx.beginPath();ctx.moveTo(ds.startX,ds.startY);ctx.lineTo(pos.x,pos.y);ctx.stroke();ctx.beginPath();ctx.moveTo(pos.x,pos.y);ctx.lineTo(pos.x-hs*Math.cos(ang-Math.PI/6),pos.y-hs*Math.sin(ang-Math.PI/6));ctx.lineTo(pos.x-hs*Math.cos(ang+Math.PI/6),pos.y-hs*Math.sin(ang+Math.PI/6));ctx.closePath();ctx.fill();}
+    }
+  }
+  function endDraw(e){if(!ds.drawing)return;ds.drawing=false;saveDrawing(which,canvas);}
+  canvas.addEventListener('mousedown',startDraw); canvas.addEventListener('mousemove',draw); canvas.addEventListener('mouseup',endDraw); canvas.addEventListener('mouseleave',endDraw);
+  canvas.addEventListener('touchstart',startDraw,{passive:false}); canvas.addEventListener('touchmove',draw,{passive:false}); canvas.addEventListener('touchend',endDraw);
+  const si=document.getElementById(`ds-${which}`); if(si) si.oninput=()=>{ds.size=+si.value;};
+}
+function saveDrawing(w,c){const sc=w==='welcome'?S.settings.welcome:S.settings.end;sc.drawing=c.toDataURL('image/png');autoSave();}
+function setDrawTool(w,t,btn){drawState[w].tool=t;document.querySelectorAll(`#dt-${w} .draw-tool-btn`).forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function setDrawColor(w,c,el){drawState[w].color=c;el.closest('.draw-tools').querySelectorAll('.draw-color-swatch').forEach(e=>e.classList.remove('active'));el.classList.add('active');}
+function clearDrawing(w){const c=document.getElementById(`dc-${w}`);if(!c)return;const ctx=c.getContext('2d');ctx.fillStyle='#f4f6fb';ctx.fillRect(0,0,c.width,c.height);const sc=w==='welcome'?S.settings.welcome:S.settings.end;sc.drawing=null;autoSave();}
+function updScreen(w,f,v){const sc=w==='welcome'?S.settings.welcome:S.settings.end;sc[f]=v;autoSave();}
+
+/* ── Section Editor ── */
+function renderSectionEditor(sec) {
+  const children = S.items.filter(q=>q.kind==='question'&&q.sectionId===sec.id);
+  const childCards = children.map((q,i)=>`
+    <div class="sec-q-card">
+      <div class="q-num">${i+1}</div>
+      <div class="q-info" style="flex:1"><div class="q-type-lbl">${TYPES[q.type]?.icon} ${TYPES[q.type]?.label}</div><div class="q-lbl">${esc(q.question||'Untitled')}</div></div>
+      <button class="btn-icon" onclick="setActive('${q.id}')" title="Edit">✎</button>
+    </div>`).join('');
+  const addBtnsHtml = `<div style="display:flex;gap:5px;flex-wrap:wrap;padding:10px 0 6px">${Object.entries(TYPES).map(([t,{icon,label}])=>`<button class="btn btn-ghost btn-sm" onclick="addQ('${t}','${sec.id}')" style="font-size:10px">${icon} ${label}</button>`).join('')}</div>`;
+  return `<div class="sec-editor">
+    <div class="ed-head"><div class="type-badge sec-badge">§ Section</div><div style="font-size:11px;color:var(--muted)">All questions on one screen</div></div>
+    <div class="ed-body">
+      <div class="field-row"><label class="lbl">Section Title</label><input class="fi" value="${esc(sec.title||'')}" oninput="updItem('${sec.id}','title',this.value)"></div>
+      <div class="field-row"><label class="lbl">Description</label><input class="fi" value="${esc(sec.description||'')}" oninput="updItem('${sec.id}','description',this.value)" placeholder="Optional context..."></div>
+      <div class="field-row"><label class="lbl">Questions in this section</label>
+        <div class="sec-q-list">${childCards||'<div style="font-size:12px;color:var(--muted);padding:8px 0">No questions yet — add below</div>'}</div>
+        ${addBtnsHtml}
+      </div>
+    </div>
+    ${renderSectionLogic(sec)}
+  </div>`;
+}
+function renderSectionLogic(sec){
+  const rules=sec.logic||[];
+  const allOpts=S.items.filter(q=>q.kind==='question'&&q.sectionId===sec.id&&['choice','yesno','three','dropdown','multibutton'].includes(q.type)).flatMap(q=>(q.options||['Yes','No']).map(o=>({qid:q.id,ql:q.question?.slice(0,20)||'Q',opt:o})));
+  const ruleHtml=rules.map((r,i)=>{
+    const oH=allOpts.map(o=>`<option value="${o.qid}::${esc(o.opt)}" ${r.ifQid===o.qid&&r.ifValue===o.opt?'selected':''}>[${esc(o.ql)}] ${esc(o.opt)}</option>`).join('');
+    const gH=getSectionGotoOptions(sec.id,r.goto);
+    return `<div class="logic-rule"><span style="font-size:11px;color:var(--muted)">If</span><select onchange="updSecLogic('${sec.id}',${i},'ifQid_ifValue',this.value)">${oH||'<option>— add choice Q first —</option>'}</select><span class="logic-arrow">→</span><select onchange="updSecLogic('${sec.id}',${i},'goto',this.value)">${gH}</select><button class="btn-icon" onclick="delSecLogic('${sec.id}',${i})" style="margin-left:auto">✕</button></div>`;
+  }).join('');
+  return `<div class="logic-wrap"><div class="logic-title"><span>⚡ Section Logic</span><button class="btn btn-ghost btn-sm" onclick="addSecLogic('${sec.id}')">+ Rule</button></div>${ruleHtml||'<div style="font-size:11px;color:var(--muted)">No rules yet.</div>'}</div>`;
+}
+function getSectionGotoOptions(secId,cur){
+  let html=`<option value="">Next</option><option value="__end__" ${cur==='__end__'?'selected':''}>End</option>`;
+  S.items.filter(i=>i.kind==='section'&&i.id!==secId).forEach(s=>{html+=`<option value="${s.id}" ${cur===s.id?'selected':''}>Section: ${esc(s.title||'?')}</option>`;});
+  S.items.filter(i=>i.kind==='question'&&!i.sectionId).forEach(q=>{html+=`<option value="${q.id}" ${cur===q.id?'selected':''}>Q: ${esc((q.question||'').slice(0,28))}</option>`;});
+  return html;
+}
+
+/* ════════════════════════════════════════════
+   MATRIX EDITOR
+════════════════════════════════════════════ */
+function renderMatrixEditor(mat) {
+  const cols = mat.columns || [];
+  const rows = mat.rows || [];
+
+  const colChips = cols.map((c,i)=>`
+    <div class="mat-col-chip">
+      <input class="mat-col-inp" value="${esc(c)}" oninput="updMatCol(${i},this.value)" placeholder="Col ${i+1}">
+      <button onclick="delMatCol(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;padding:0 2px">✕</button>
+    </div>`).join('');
+
+  const rowCards = rows.map((r,i)=>{
+    const typeOpts = MAT_ROW_TYPES.map(t=>`<option value="${t}" ${r.type===t?'selected':''}>${t}</option>`).join('');
+    // Mini preview of how row inputs look
+    const previewCell = buildMatCellPreview(r.type);
+    const colPreview = cols.map(()=>`<td style="padding:4px 8px;text-align:center;border-bottom:1px solid var(--border);border-right:1px solid var(--border)">${previewCell}</td>`).join('');
+
+    return `<div class="mat-row-card">
+      <div class="mat-row-head">
+        <span class="mat-row-q">${i+1}. ${esc(r.label||'Row '+i)}</span>
+        <span class="mat-row-type-badge">${r.type}</span>
+        <button class="btn-icon" onclick="delMatRow('${mat.id}',${i})">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;margin-bottom:8px">
+        <input class="fi" style="font-size:12px" value="${esc(r.label||'')}" oninput="updMatRow('${mat.id}',${i},'label',this.value)" placeholder="Row label (question)">
+        <div class="sel-wrap" style="min-width:100px"><select class="fi" style="font-size:11px" onchange="updMatRow('${mat.id}',${i},'type',this.value)">${typeOpts}</select></div>
+      </div>
+      ${cols.length>0?`<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:10px">
+        <tr><th style="padding:4px 8px;background:var(--surface3);border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:left;color:var(--muted)">—</th>${cols.map(c=>`<th style="padding:4px 8px;background:var(--surface3);border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:center;color:var(--muted)">${esc(c)}</th>`).join('')}</tr>
+        <tr><td style="padding:4px 8px;background:var(--surface2);border-right:1px solid var(--border);font-weight:600;font-size:10px">${esc(r.label)}</td>${colPreview}</tr>
+      </table></div>`:''}
+    </div>`;
+  }).join('');
+
+  return `<div class="mat-editor">
+    <div class="ed-head">
+      <div class="type-badge mat-badge">⊞ Matrix</div>
+      <div style="font-size:11px;color:var(--muted)">${rows.length} rows · ${cols.length} columns · rows can have different types</div>
+    </div>
+    <div class="mat-section">
+      <div class="field-row"><label class="lbl">Matrix Title</label><input class="fi" value="${esc(mat.title||'')}" oninput="updItem('${mat.id}','title',this.value)" placeholder="Matrix heading..."></div>
+      <div class="field-row" style="margin-top:10px"><label class="lbl">Description</label><input class="fi" value="${esc(mat.description||'')}" oninput="updItem('${mat.id}','description',this.value)" placeholder="Optional context..."></div>
+    </div>
+    <div class="mat-section">
+      <div class="lbl" style="margin-bottom:8px">Columns (shared across all rows)</div>
+      <div class="mat-cols-row" id="mat-cols-${mat.id}">${colChips}</div>
+      <button class="add-opt-btn" style="margin-top:6px" onclick="addMatCol('${mat.id}')">+ Add column</button>
+    </div>
+    <div class="mat-section">
+      <div class="lbl" style="margin-bottom:8px">Rows <span style="color:var(--muted);font-weight:400;font-size:9px;margin-left:4px">Each row is a separate question — can have different input types</span></div>
+      ${rowCards||'<div style="font-size:12px;color:var(--muted);padding:8px 0">No rows yet — add one below</div>'}
+      <button class="add-opt-btn" style="margin-top:8px" onclick="addMatRow('${mat.id}')">+ Add row</button>
+    </div>
+  </div>`;
+}
+
+function buildMatCellPreview(type) {
+  switch(type) {
+    case 'short': return `<span style="font-size:9px;color:var(--accent);background:rgba(91,62,248,.07);padding:2px 6px;border-radius:4px;border:1px solid var(--border)">text…</span>`;
+    case 'number': return `<span style="font-size:9px;color:var(--accent);background:rgba(91,62,248,.07);padding:2px 6px;border-radius:4px;border:1px solid var(--border)">0</span>`;
+    case 'checkbox': return `<span style="font-size:13px">☑</span>`;
+    case 'radio': return `<span style="font-size:13px">🔵</span>`;
+    case 'rating': return `<span style="font-size:10px">★★★☆☆</span>`;
+    case 'scale': return `<span style="font-size:9px;color:var(--muted)">◀━━●━━▶</span>`;
+    default: return `<span style="color:var(--muted);font-size:9px">${type}</span>`;
+  }
+}
+
+/* Matrix item management */
+function addMatrix() {
+  const id = uid();
+  S.items.push({ id, kind:'matrix', title:'New Matrix', description:'', columns:['Option A','Option B','Option C'],
+    rows:[{id:uid(),label:'Question 1',type:'radio'},{id:uid(),label:'Question 2',type:'rating'}]
+  });
+  S.activeId=id; S.editingScreen=null; renderAll(); autoSave(); toast('Matrix added');
+}
+function addMatCol(matId) {
+  const m=S.items.find(i=>i.id===matId); if(!m) return;
+  m.columns.push('Column '+(m.columns.length+1)); renderEditor(); autoSave();
+}
+function updMatCol(i,val) {
+  const m=getActive(); if(!m||m.kind!=='matrix') return;
+  m.columns[i]=val; autoSave();
+}
+function delMatCol(i) {
+  const m=getActive(); if(!m||m.kind!=='matrix') return;
+  if(m.columns.length<=1){toast('Need at least 1 column');return;}
+  m.columns.splice(i,1); renderEditor(); autoSave();
+}
+function addMatRow(matId) {
+  const m=S.items.find(i=>i.id===matId); if(!m) return;
+  m.rows.push({id:uid(),label:'Question '+(m.rows.length+1),type:'radio'}); renderEditor(); autoSave();
+}
+function updMatRow(matId,i,field,val) {
+  const m=S.items.find(i=>i.id===matId); if(!m||!m.rows[i]) return;
+  m.rows[i][field]=val; if(field==='type') renderEditor(); autoSave();
+}
+function delMatRow(matId,i) {
+  const m=S.items.find(i=>i.id===matId); if(!m) return;
+  if(m.rows.length<=1){toast('Need at least 1 row');return;}
+  m.rows.splice(i,1); renderEditor(); autoSave();
+}
+
+/* ── Question Editor ── */
+function renderQEditor(q) {
+  const ti = TYPES[q.type]||{};
+  let body = `
+    <div class="field-row"><label class="lbl">Question text</label><input class="fi" value="${esc(q.question)}" oninput="updItem('${q.id}','question',this.value)"></div>
+    <div class="field-row"><label class="lbl">Description (optional)</label><input class="fi" value="${esc(q.description||'')}" oninput="updItem('${q.id}','description',this.value)" placeholder="Context..."></div>`;
+  if (['choice','dropdown','multibutton'].includes(q.type)) {
+    body += `<div class="field-row"><label class="lbl">Options</label>
+      <div class="opt-list">${(q.options||[]).map((o,i)=>`<div class="opt-item"><span class="drag-h">⠿</span><input class="opt-inp" value="${esc(o)}" oninput="updOpt('${q.id}',${i},this.value)"><button class="opt-del" onclick="delOpt('${q.id}',${i})">✕</button></div>`).join('')}</div>
+      <button class="add-opt-btn" onclick="addOpt('${q.id}')">+ Add option</button></div>`;
+  }
+  if (q.type==='three') {
+    const opts=q.options||['A','B','C']; const icons=q.icons||['','',''];
+    body += `<div class="field-row"><label class="lbl">3 Options</label><div class="opt-list">${[0,1,2].map(i=>`<div class="opt-item"><span class="drag-h">${['🅐','🅑','🅒'][i]}</span><input class="opt-inp" value="${esc(opts[i]||'')}" oninput="updThreeOpt('${q.id}',${i},this.value)" placeholder="Option ${i+1}"><input class="opt-inp" value="${esc(icons[i]||'')}" oninput="updThreeIcon('${q.id}',${i},this.value)" placeholder="emoji" style="width:44px"></div>`).join('')}</div></div>`;
+  }
+  if (q.type==='picturebutton') {
+    const pics=q.pictures||[];
+    body += `<div class="field-row"><label class="lbl">Picture cards</label><div class="pic-grid">
+      ${pics.map((p,i)=>`<div class="pic-slot" onclick="triggerPicUp('${q.id}',${i})">${p.url?`<img src="${p.url}" alt="">`:`<div class="pic-slot-ov"><span style="font-size:20px">🖼️</span><span>Upload</span></div>`}<div class="pic-slot-lbl">${esc(p.label||`Opt ${i+1}`)}</div><div class="pic-slot-actions"><button class="btn-icon" onclick="event.stopPropagation();updPicLbl('${q.id}',${i})" title="Edit">✎</button><button class="btn-icon" style="color:var(--danger)" onclick="event.stopPropagation();delPic('${q.id}',${i})">✕</button></div></div><input type="file" id="pi-${q.id}-${i}" accept="image/*" style="display:none" onchange="handlePicUp('${q.id}',${i},this)">`).join('')}
+      <div class="add-pic-slot" onclick="addPic('${q.id}')"><span style="font-size:20px">+</span><span>Add</span></div>
+    </div></div>`;
+  }
+  if (q.type==='scale') {
+    body += `<div class="two-col"><div class="field-row"><label class="lbl">Min label</label><input class="fi" style="font-size:12px" value="${esc(q.scaleMinLabel||'Not at all')}" oninput="updItem('${q.id}','scaleMinLabel',this.value)"></div><div class="field-row"><label class="lbl">Max label</label><input class="fi" style="font-size:12px" value="${esc(q.scaleMaxLabel||'Completely')}" oninput="updItem('${q.id}','scaleMaxLabel',this.value)"></div></div>`;
+  }
+  const canLogic = ['choice','yesno','three','dropdown','multibutton'].includes(q.type) && !q.sectionId;
+  const logicHtml = canLogic ? renderQLogic(q) : (q.sectionId ? `<div class="logic-wrap"><div style="font-size:11px;color:var(--muted)">Logic for section-grouped questions is set on the section.</div></div>` : '');
+  return `<div class="q-editor">
+    <div class="ed-head"><div class="type-badge">${ti.icon} ${ti.label||q.type}</div>${q.required?'<span style="font-size:10px;background:rgba(224,62,62,.07);border:1px solid rgba(224,62,62,.2);color:var(--danger);padding:2px 8px;border-radius:100px;font-weight:600">Required</span>':''}</div>
+    <div class="ed-body">${body}</div>
+    ${logicHtml}
+  </div>`;
+}
+function renderQLogic(q) {
+  const rules=q.logic||[], opts=q.options||['Yes','No'];
+  const rH=rules.map((r,i)=>{
+    const oH=opts.map(o=>`<option value="${esc(o)}" ${r.ifValue===o?'selected':''}>${esc(o)}</option>`).join('');
+    const gH=getQGotoOptions(q.id,r.goto);
+    return `<div class="logic-rule"><span style="font-size:11px;color:var(--muted)">If answer</span><select onchange="updQLogic('${q.id}',${i},'condition',this.value)"><option value="is" ${r.condition==='is'?'selected':''}>is</option><option value="contains" ${r.condition==='contains'?'selected':''}>contains</option></select><select onchange="updQLogic('${q.id}',${i},'ifValue',this.value)">${oH}</select><span class="logic-arrow">→</span><select onchange="updQLogic('${q.id}',${i},'goto',this.value)">${gH}</select><button class="btn-icon" onclick="delQLogic('${q.id}',${i})" style="margin-left:auto">✕</button></div>`;
+  }).join('');
+  return `<div class="logic-wrap"><div class="logic-title"><span>⚡ Logic / Branching</span><button class="btn btn-ghost btn-sm" onclick="addQLogic('${q.id}')">+ Rule</button></div>${rH||'<div style="font-size:11px;color:var(--muted)">No rules yet.</div>'}</div>`;
+}
+function getQGotoOptions(qid,cur) {
+  const idx=S.items.findIndex(i=>i.id===qid);
+  let html=`<option value="">Next</option><option value="__end__" ${cur==='__end__'?'selected':''}>End</option>`;
+  S.items.forEach((item,i)=>{
+    if(i<=idx) return;
+    if(item.kind==='section') html+=`<option value="${item.id}" ${cur===item.id?'selected':''}>Section: ${esc(item.title||'?')}</option>`;
+    else if(item.kind==='matrix') html+=`<option value="${item.id}" ${cur===item.id?'selected':''}>Matrix: ${esc(item.title||'?')}</option>`;
+    else if(!item.sectionId) html+=`<option value="${item.id}" ${cur===item.id?'selected':''}>Q: ${esc((item.question||'').slice(0,28))}</option>`;
+  });
+  return html;
+}
+
+/* ════════════════════════════════════════════
+   ITEM MANAGEMENT
+════════════════════════════════════════════ */
+function addSection(){const id=uid();S.items.push({id,kind:'section',title:'New Section',description:'',logic:[]});S.activeId=id;S.editingScreen=null;renderAll();autoSave();toast('Section added');}
+function addQ(type,sectionId){
+  const defs={short:{question:'Your question',description:'',required:false},long:{question:'Your question',description:'',required:false},choice:{question:'Pick an option',description:'',options:['Option 1','Option 2','Option 3'],multiple:false,other:false},multibutton:{question:'Select all that apply',description:'',options:['Option A','Option B','Option C','Option D']},three:{question:'Which best describes you?',description:'',options:['Option A','Option B','Option C'],icons:['','','']},picturebutton:{question:'Choose an option',description:'',pictures:[]},dropdown:{question:'Select from the list',description:'',options:['Option 1','Option 2','Option 3']},rating:{question:'Rate your experience',description:'',ratingMax:10},scale:{question:'How much do you agree?',description:'',scaleMin:0,scaleMax:10,scaleMinLabel:'Not at all',scaleMaxLabel:'Completely'},yesno:{question:'Quick question',description:''},email:{question:"What's your email?",description:'',required:false},number:{question:'Enter a number',description:'',required:false},date:{question:'Select a date',description:'',required:false}};
+  const q={id:uid(),kind:'question',type,required:false,...(defs[type]||{}),sectionId:sectionId||null};
+  if(sectionId){const si=S.items.findLastIndex(i=>i.id===sectionId||i.sectionId===sectionId);S.items.splice(si+1,0,q);}
+  else S.items.push(q);
+  S.activeId=q.id;S.editingScreen=null;renderAll();autoSave();toast('Question added');
+}
+function delItem(id){S.items=S.items.filter(i=>i.id!==id&&i.sectionId!==id);if(S.activeId===id)S.activeId=S.items[0]?.id||null;renderAll();autoSave();}
+function setActive(id){S.activeId=id;S.editingScreen=null;renderAll();}
+function getActive(){return S.items.find(i=>i.id===S.activeId);}
+function updItem(id,f,v){const item=S.items.find(i=>i.id===id);if(item){item[f]=v;if(f==='question'||f==='title')renderQList();autoSave();}}
+function updOpt(id,i,v){const q=S.items.find(q=>q.id===id);if(q&&q.options){q.options[i]=v;autoSave();}}
+function addOpt(id){const q=S.items.find(q=>q.id===id);if(q){q.options=q.options||[];q.options.push('Option '+(q.options.length+1));renderEditor();autoSave();}}
+function delOpt(id,i){const q=S.items.find(q=>q.id===id);if(q&&q.options&&q.options.length>1){q.options.splice(i,1);renderEditor();autoSave();}}
+function updThreeOpt(id,i,v){const q=S.items.find(q=>q.id===id);if(q){q.options=q.options||['','',''];q.options[i]=v;autoSave();}}
+function updThreeIcon(id,i,v){const q=S.items.find(q=>q.id===id);if(q){q.icons=q.icons||['','',''];q.icons[i]=v;autoSave();}}
+function addPic(id){const q=S.items.find(q=>q.id===id);if(q){q.pictures=q.pictures||[];q.pictures.push({url:'',label:`Option ${q.pictures.length+1}`});renderEditor();autoSave();}}
+function delPic(id,i){const q=S.items.find(q=>q.id===id);if(q&&q.pictures){q.pictures.splice(i,1);renderEditor();autoSave();}}
+function updPicLbl(id,i){const q=S.items.find(q=>q.id===id);if(!q||!q.pictures)return;const l=prompt('Label:',q.pictures[i].label||'');if(l!==null){q.pictures[i].label=l;renderEditor();autoSave();}}
+function triggerPicUp(id,i){document.getElementById(`pi-${id}-${i}`)?.click();}
+function handlePicUp(id,i,inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const q=S.items.find(q=>q.id===id);if(q&&q.pictures){q.pictures[i].url=e.target.result;renderEditor();autoSave();}};r.readAsDataURL(f);}
+function addQLogic(qid){const q=S.items.find(i=>i.id===qid);if(!q)return;q.logic=q.logic||[];q.logic.push({condition:'is',ifValue:(q.options||['Yes'])[0],goto:''});renderEditor();autoSave();}
+function updQLogic(qid,i,f,v){const q=S.items.find(i=>i.id===qid);if(q&&q.logic&&q.logic[i]){q.logic[i][f]=v;autoSave();}}
+function delQLogic(qid,i){const q=S.items.find(i=>i.id===qid);if(q&&q.logic){q.logic.splice(i,1);renderEditor();autoSave();}}
+function addSecLogic(secId){const s=S.items.find(i=>i.id===secId);if(!s)return;s.logic=s.logic||[];s.logic.push({ifQid:'',ifValue:'',goto:''});renderEditor();autoSave();}
+function updSecLogic(secId,i,f,v){const s=S.items.find(i=>i.id===secId);if(!s||!s.logic||!s.logic[i])return;if(f==='ifQid_ifValue'){const p=v.split('::');s.logic[i].ifQid=p[0];s.logic[i].ifValue=p[1]||'';}else s.logic[i][f]=v;autoSave();}
+function delSecLogic(secId,i){const s=S.items.find(i=>i.id===secId);if(s&&s.logic){s.logic.splice(i,1);renderEditor();autoSave();}}
+
+function syncRightPanel(){
+  const q=getActive();if(!q||q.kind==='section'||q.kind==='matrix')return;
+  document.getElementById('row-multiple').style.display=['choice','multibutton'].includes(q.type)?'':'none';
+  document.getElementById('row-other').style.display=q.type==='choice'?'':'none';
+  document.getElementById('row-ratingMax').style.display=q.type==='rating'?'':'none';
+  document.getElementById('tog-required').classList.toggle('on',!!q.required);
+  document.getElementById('tog-multiple').classList.toggle('on',!!q.multiple);
+  document.getElementById('tog-other').classList.toggle('on',!!q.other);
+  if(q.ratingMax) document.getElementById('ratingMaxSel').value=q.ratingMax;
+}
+function togSetting(s){const q=getActive();if(!q||q.kind==='section'||q.kind==='matrix')return;q[s]=!q[s];syncRightPanel();renderEditor();autoSave();}
+function setRatingMax(v){const q=getActive();if(q){q.ratingMax=v;autoSave();}}
+function setColor(el){document.querySelectorAll('.cs').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');S.settings.accent=el.dataset.c;document.documentElement.style.setProperty('--accent',el.dataset.c);autoSave();}
+function setFont(f){S.settings.font=f;loadGFont(f);document.documentElement.style.setProperty('--fd',`'${f}',sans-serif`);autoSave();}
+function loadGFont(f){const url=`https://fonts.googleapis.com/css2?family=${f.replace(/ /g,'+')}:wght@400;700;800&display=swap`;if(!document.querySelector(`link[href="${url}"]`)){const l=document.createElement('link');l.rel='stylesheet';l.href=url;document.head.appendChild(l);}}
+function applyStyleSettings(){document.documentElement.style.setProperty('--accent',S.settings.accent||'#5b3ef8');if(S.settings.font&&S.settings.font!=='Syne'){loadGFont(S.settings.font);document.documentElement.style.setProperty('--fd',`'${S.settings.font}',sans-serif`);}}
+function updateTitle(){S.settings.title=document.getElementById('formTitle').value||'Untitled Form';autoSave();}
+
+/* ── DRAG AND DROP REORDERING ── */
+let dragId = null;
+function dragStart(e, id) { dragId = id; e.dataTransfer.effectAllowed = 'move'; e.target.style.opacity = '0.5'; }
+function dragEnd(e) { e.target.style.opacity = '1'; dragId = null; document.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target')); }
+function dragOver(e) { 
+  e.preventDefault(); 
+  const t = e.target.closest('.q-item, .sec-item, .mat-item, .sec-q-item'); 
+  if(t) { 
+    document.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target')); 
+    t.classList.add('drop-target'); 
+  } 
+}
+function dropItemOn(e, targetId) {
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll('.drop-target').forEach(el=>el.classList.remove('drop-target'));
+  if(!dragId || dragId === targetId) return;
+
+  const dragIdx = S.items.findIndex(i => i.id === dragId);
+  let dropIdx = S.items.findIndex(i => i.id === targetId);
+  if(dragIdx < 0 || dropIdx < 0) return;
+
+  const dragged = S.items[dragIdx];
+  const target = S.items[dropIdx];
+
+  // Logic: Group items into sections if dropped inside one
+  if (dragged.kind !== 'section') {
+    if (target.kind === 'section') dragged.sectionId = target.id;
+    else if (target.sectionId) dragged.sectionId = target.sectionId;
+    else dragged.sectionId = null;
+  }
+
+  // Move the item in the array
+  S.items.splice(dragIdx, 1);
+  dropIdx = S.items.findIndex(i => i.id === targetId); // recalculate index
+  S.items.splice(dropIdx, 0, dragged);
+
+  // If a whole section is moved, bring its children with it
+  if (dragged.kind === 'section') {
+    const children = S.items.filter(i => i.sectionId === dragged.id);
+    S.items = S.items.filter(i => i.sectionId !== dragged.id);
+    const newSecIdx = S.items.findIndex(i => i.id === dragged.id);
+    S.items.splice(newSecIdx + 1, 0, ...children);
+  }
+
+  renderAll(); autoSave();
+}
+
+/* ════════════════════════════════════════════
+   CSV — EXPORT QUESTIONS
+   Format: id,kind,type,question,description,options,required,ratingMax,scaleMin,scaleMax,scaleMinLabel,scaleMaxLabel,sectionId,matrixTitle,matrixCols,matrixRows
+════════════════════════════════════════════ */
+function exportQuestionsCSV(){
+  const hdr=['id','kind','type','question','description','options','required','ratingMax','scaleMin','scaleMax','scaleMinLabel','scaleMaxLabel','sectionId','matrixTitle','matrixColumns','matrixRows'];
+  const rows=S.items.map(item=>{
+    if(item.kind==='question'){
+      return [item.id,'question',item.type||'',item.question||'',item.description||'',(item.options||[]).join('|'),item.required?'true':'false',item.ratingMax||'',item.scaleMin??'',item.scaleMax??'',item.scaleMinLabel||'',item.scaleMaxLabel||'',item.sectionId||'','','',''];
+    } else if(item.kind==='section'){
+      return [item.id,'section','','',item.description||'','','','','','','','','','',item.title||'',''];
+    } else if(item.kind==='matrix'){
+      const rowsJson=JSON.stringify((item.rows||[]).map(r=>({label:r.label||'',type:r.type||'radio'})));
+      return [item.id,'matrix','',item.title||'',item.description||'','','','','','','','','',item.title||'',(item.columns||[]).join('|'),rowsJson];
+    }
+    return [];
+  }).filter(r=>r.length);
+  const csv=[hdr,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  dl(csv,'text/csv',S.settings.title+'-questions.csv');
+  toast('Questions exported ↓');
+}
+
+/* ── DOWNLOAD TEMPLATE ── */
+function downloadTemplate(){
+  const template = `"id","kind","type","question","description","options","required","ratingMax","scaleMin","scaleMax","scaleMinLabel","scaleMaxLabel","sectionId","matrixTitle","matrixColumns","matrixRows"
+"","question","short","Your short text question","Optional description","","false","","","","","","","","",""
+"","question","long","Your long text question","Supports multi-line","","false","","","","","","","","",""
+"","question","choice","Which do you prefer?","Pick one","Option A|Option B|Option C","false","","","","","","","","",""
+"","question","multibutton","Select all that apply","Multiple selection","Tag 1|Tag 2|Tag 3|Tag 4","false","","","","","","","","",""
+"","question","rating","Rate your experience","10 = amazing","","false","10","","","","","","","",""
+"","question","scale","How strongly do you agree?","Drag the slider","","false","","0","10","Not at all","Completely","","","",""
+"","question","yesno","Quick yes or no question","","","false","","","","","","","","",""
+"","question","email","What is your email?","We keep it private","","false","","","","","","","","",""
+"","question","number","Enter a number","Numeric input","","false","","","","","","","","",""
+"","question","date","Select a date","Day / Month / Year","","false","","","","","","","","",""
+"","question","dropdown","Select from a list","","Choice 1|Choice 2|Choice 3","false","","","","","","","","",""
+"","question","three","Which best describes you?","3 card-style options","Option A|Option B|Option C","false","","","","","","","","",""
+"","section","","","Section description","","","","","","","","","My Section Title","",""
+"","matrix","","Matrix Title","Matrix description","","","","","","","","","Matrix Title","Col A|Col B|Col C","[{""label"":""Row 1"",""type"":""radio""},{""label"":""Row 2"",""type"":""rating""}]"`;
+  dl(template,'text/csv','formflow-questions-template.csv');
+  toast('Template downloaded ↓');
+}
+
+/* ── IMPORT CSV ── */
+function handleCSVImport(inp){
+  const file=inp.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const rows=parseCSV(e.target.result);
+      if(!rows.length){toast('No data found in CSV');return;}
+      const hdr=rows[0].map(h=>h.trim().toLowerCase().replace(/[^a-z0-9]/g,''));
+      const idxOf=n=>hdr.indexOf(n);
+      const get=(row,n)=>row[idxOf(n)]?.trim()||'';
+      const imported=[];
+      for(let i=1;i<rows.length;i++){
+        const row=rows[i]; if(!row||row.every(c=>!c.trim())) continue;
+        const kind=get(row,'kind')||'question';
+        const newId=uid();
+        if(kind==='section'){
+          const title=get(row,'matrixtitle')||get(row,'question')||'New Section';
+          imported.push({id:newId,kind:'section',title,description:get(row,'description'),logic:[]});
+        } else if(kind==='matrix'){
+          const cols=(get(row,'matrixcolumns')||'').split('|').filter(Boolean);
+          let mrows=[];
+          try{mrows=JSON.parse(get(row,'matrixrows')||'[]').map(r=>({id:uid(),label:r.label||'Row',type:r.type||'radio'}));}catch(e2){mrows=[{id:uid(),label:'Row 1',type:'radio'}];}
+          imported.push({id:newId,kind:'matrix',title:get(row,'matrixtitle')||get(row,'question')||'Matrix',description:get(row,'description'),columns:cols.length?cols:['A','B','C'],rows:mrows});
+        } else {
+          const type=get(row,'type')||'short';
+          const options=(get(row,'options')||'').split('|').filter(Boolean);
+          const q={id:newId,kind:'question',type,question:get(row,'question')||'New Question',description:get(row,'description'),required:get(row,'required')==='true',sectionId:null};
+          if(options.length) q.options=options;
+          if(get(row,'ratingmax')) q.ratingMax=+get(row,'ratingmax')||10;
+          if(get(row,'scalemin')!=='') q.scaleMin=+get(row,'scalemin')||0;
+          if(get(row,'scalemax')!=='') q.scaleMax=+get(row,'scalemax')||10;
+          if(get(row,'scaleminlabel')) q.scaleMinLabel=get(row,'scaleminlabel');
+          if(get(row,'scalemaxlabel')) q.scaleMaxLabel=get(row,'scalemaxlabel');
+          imported.push(q);
+        }
       }
-      trTime.appendChild(td);
-    });
-    bodyEl.appendChild(trTime);
-
-    // Feedback
-    const trFb = document.createElement("tr");
-    const tdFbLabel = document.createElement("td"); tdFbLabel.textContent = "Feedback"; trFb.appendChild(tdFbLabel);
-    state.projects.forEach((p, colIdx) => {
-      const td = document.createElement("td");
-      const ans = getAns(p, qIdx);
-      td.innerHTML = `<textarea class="cell-feedback" data-q="${qIdx}" data-col="${colIdx}" placeholder="Enter feedback...">${escapeHtml(ans.feedback)}</textarea>`;
-      trFb.appendChild(td);
-    });
-    bodyEl.appendChild(trFb);
-  });
+      if(!imported.length){toast('No valid rows found');return;}
+      const mode=confirm(`Import ${imported.length} items?\nOK = add to existing\nCancel = replace all`);
+      if(mode) S.items.push(...imported);
+      else S.items=imported;
+      S.activeId=imported[0]?.id||null; renderAll(); autoSave();
+      toast(`✓ Imported ${imported.length} items`);
+    }catch(err){toast('CSV parse error: '+err.message);}
+  };
+  reader.readAsText(file);
+  inp.value='';
 }
 
-/* ---------- Accessors ---------- */
-function getAns(project, qIdx){
-  const key = QUESTIONS[qIdx];
-  if(!project.answers) project.answers = {};
-  if(!project.answers[key]) {
-    project.answers[key] = { before:"", after:"", manual:"", trb:"", tasx:"", feedback:"" };
+function parseCSV(text){
+  const rows=[]; let row=[],cell='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],nx=text[i+1];
+    if(inQ){if(ch==='"'&&nx==='"'){cell+='"';i++;}else if(ch==='"'){inQ=false;}else cell+=ch;}
+    else{if(ch==='"'){inQ=true;}else if(ch===','){row.push(cell);cell='';}else if(ch==='\r'&&nx==='\n'){row.push(cell);cell='';rows.push(row);row=[];i++;}else if(ch==='\n'||ch==='\r'){row.push(cell);cell='';rows.push(row);row='';}else cell+=ch;}
   }
-  return project.answers[key];
+  if(cell||row.length){row.push(cell);rows.push(row);}
+  return rows.filter(r=>r.length>0);
 }
 
-/* ---------- Wiring / Handlers ---------- */
-function wireUp(){
-  const companyEl = document.getElementById('companyName');
-  companyEl?.addEventListener('input', e => { state.companyName = e.target.value.trim(); saveState(); });
+/* ════════════════════════════════════════════
+   AUTOSAVE
+════════════════════════════════════════════ */
+let _saveT;
+function autoSave(){
+  clearTimeout(_saveT);
+  document.getElementById('saveIco').textContent='↻';
+  document.getElementById('saveTxt').textContent='Saving…';
+  _saveT=setTimeout(()=>{
+    try{localStorage.setItem('ff_builder_draft',JSON.stringify({items:S.items,settings:S.settings}));}catch(e){}
+    document.getElementById('saveIco').textContent='✓';
+    document.getElementById('saveTxt').textContent='Saved';
+  },600);
+}
 
-  document.querySelectorAll('.proj-name').forEach(el=>{
-    el.addEventListener('input', e=>{ const pi = +el.dataset.proj; state.projects[pi].name = el.innerText || `Project ${pi+1}`; saveState(); });
-    el.addEventListener('blur', e=>{ const pi = +el.dataset.proj; state.projects[pi].name = el.innerText.trim() || `Project ${pi+1}`; el.innerText = state.projects[pi].name; saveState(); });
+const PROGRESS_KEY=()=>'ff_progress_'+S.settings.title.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+function saveRespondentProgress(){try{localStorage.setItem(PROGRESS_KEY(),JSON.stringify({savedAt:new Date().toISOString(),currentSlide:S.currentSlide,answers:S.answers,formTitle:S.settings.title}));toast('Progress saved ✓');}catch(e){toast('Could not save');}}
+function loadRespondentProgress(){try{const r=localStorage.getItem(PROGRESS_KEY());return r?JSON.parse(r):null;}catch(e){return null;}}
+function clearRespondentProgress(){try{localStorage.removeItem(PROGRESS_KEY());}catch(e){}}
+function autoSaveProgress(){try{localStorage.setItem(PROGRESS_KEY(),JSON.stringify({savedAt:new Date().toISOString(),currentSlide:S.currentSlide,answers:S.answers,formTitle:S.settings.title}));}catch(e){}}
+
+/* ════════════════════════════════════════════
+   PREVIEW — SLIDE MAP
+════════════════════════════════════════════ */
+let slideMap=[];
+function launchPreview(){
+  S.views++; S.currentSlide=0; S.submitted=false;
+  const prog=loadRespondentProgress();
+  S.answers=prog&&prog.formTitle===S.settings.title?prog.answers||{}:{};
+  document.getElementById('prevTitle').textContent=S.settings.title;
+  buildSlideMap(); buildPreviewDOM(); goSlide(0);
+}
+function buildSlideMap(){
+  slideMap=[{type:'welcome',id:'welcome'}];
+  const rendered=new Set();
+  S.items.forEach(item=>{
+    if(rendered.has(item.id)) return;
+    if(item.kind==='section'){rendered.add(item.id);S.items.filter(q=>q.kind==='question'&&q.sectionId===item.id).forEach(q=>rendered.add(q.id));slideMap.push({type:'section',id:item.id});}
+    else if(item.kind==='matrix'){rendered.add(item.id);slideMap.push({type:'matrix',id:item.id});}
+    else if(item.kind==='question'&&!item.sectionId){rendered.add(item.id);slideMap.push({type:'question',id:item.id});}
   });
+  slideMap.push({type:'end',id:'end'});
+}
+function buildPreviewDOM(){
+  const view=document.getElementById('formView');
+  const prog=loadRespondentProgress();
+  const hasProg=prog&&prog.formTitle===S.settings.title&&Object.keys(prog.answers||{}).length>0;
+  view.innerHTML=slideMap.map(sm=>{
+    if(sm.type==='welcome') return buildWelcomeSlide(hasProg,prog);
+    if(sm.type==='end') return buildEndSlide();
+    if(sm.type==='question'){const q=S.items.find(i=>i.id===sm.id);return q?buildQSlide(q,getQNumber(q.id)):'';}
+    if(sm.type==='section'){const s=S.items.find(i=>i.id===sm.id);return s?buildSectionSlide(s):'';}
+    if(sm.type==='matrix'){const m=S.items.find(i=>i.id===sm.id);return m?buildMatrixSlide(m):'';}
+    return '';
+  }).join('');
+}
 
-  document.querySelectorAll('.proj-upload').forEach(btn=>{
-    btn.addEventListener('click', e=>{
-      const pi = +btn.dataset.proj;
-      const fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*';
-      fi.onchange = ev=>{
-        const f = ev.target.files[0];
-        if(!f) return;
-        const reader = new FileReader();
-        reader.onload = r=>{ state.projects[pi].screenshot = r.target.result; state.projects[pi].screenshotName = f.name; saveState(); rebuild(); };
-        reader.readAsDataURL(f);
+function getQNumber(qid){let n=0;for(const item of S.items){if(item.kind==='question'){n++;if(item.id===qid)return n;}}return n;}
+function totalQs(){return S.items.filter(i=>i.kind==='question').length;}
+
+function buildWelcomeSlide(hasProg,prog){
+  const sc=S.settings.welcome;
+  const savedDate=hasProg?new Date(prog.savedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+  const drawImg=sc.drawing?`<img class="welcome-canvas-display" src="${sc.drawing}" alt="decoration" style="max-height:180px;object-fit:contain">`:'';
+  const resumeBanner=hasProg?`<div class="resume-banner"><div class="rb-info"><div class="rb-title">📌 You have saved progress</div><div class="rb-meta">Last saved ${savedDate}</div></div><div style="display:flex;gap:7px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="discardProgress()">Start over</button><button class="btn btn-primary btn-sm" onclick="resumeProgress()">Resume →</button></div></div>`:'';
+  return `<div class="form-slide slide-up" id="sl-welcome"><div class="slide-inner" style="text-align:center;max-width:600px">
+    ${drawImg}
+    <h1 class="welcome-title">${esc(sc.title||S.settings.title)}</h1>
+    <p class="welcome-sub">${esc(sc.subtitle||'')}</p>
+    ${resumeBanner}
+    <button class="btn-next" style="font-size:15px;padding:13px 32px;margin:0 auto" onclick="nextSlide()">${esc(sc.buttonText||"Let's go →")}</button>
+    <div class="kbd-hint" style="justify-content:center;margin-top:12px"><kbd>Enter</kbd> to begin</div>
+  </div></div>`;
+}
+
+function buildEndSlide(){
+  const sc=S.settings.end;
+  const drawImg=sc.drawing?`<img src="${sc.drawing}" alt="" style="max-width:100%;max-height:150px;object-fit:contain;border-radius:12px;margin:0 auto 24px;display:block;box-shadow:var(--shadow)">`:'';
+  return `<div class="form-slide slide-up" id="sl-end"><div class="slide-inner" style="text-align:center;max-width:560px">
+    ${drawImg}
+    <div class="ty-icon">🎉</div>
+    <div class="ty-title">${esc(sc.title||'All done!')}</div>
+    <p style="font-size:14px;color:var(--muted);max-width:420px;margin:0 auto 26px;line-height:1.7;animation:fadeUp .45s .25s ease both">${esc(sc.subtitle||'Thank you!')}</p>
+    <div style="display:flex;gap:9px;justify-content:center;animation:fadeUp .45s .35s ease both;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="backToBuilder();switchTab('results')" style="font-size:13px">View results →</button>
+      <button class="btn btn-ghost btn-sm" onclick="startOver()" style="font-size:13px">Fill again</button>
+    </div>
+  </div></div>`;
+}
+
+function buildQSlide(q,num){
+  const req=q.required?`<span class="req-badge">Required</span>`:'';
+  const isLast=isLastSlideItem(q.id);
+  const inp=buildQInput(q);
+  const backBtn=slideMap.findIndex(s=>s.id===q.id)>1?`<button class="btn-back" onclick="prevSlide()">↑ Back</button>`:'';
+  const nextCls=isLast?'btn-next btn-submit':'btn-next';
+  const skipBtn=!q.required?`<button class="btn-skip" onclick="skipSlide()">Skip →</button>`:'';
+  return `<div class="form-slide slide-up" id="sl-${q.id}"><div class="slide-inner">
+    <div class="slide-num">${num} of ${totalQs()}</div>
+    <h2 class="slide-q">${esc(q.question)}${req}</h2>
+    ${q.description?`<p class="slide-desc">${esc(q.description)}</p>`:''}
+    ${inp}
+    <div class="s-nav">${backBtn}<button class="${nextCls}" onclick="${isLast?'submitForm()':'nextSlide()'}">
+      ${isLast?'Submit →':'OK ✓'}
+    </button>${skipBtn}</div>
+    ${isLast?'':`<div class="kbd-hint"><kbd>Enter</kbd> to continue</div>`}
+  </div></div>`;
+}
+
+function buildSectionSlide(sec){
+  const children=S.items.filter(q=>q.kind==='question'&&q.sectionId===sec.id);
+  const secIdx=slideMap.findIndex(s=>s.id===sec.id);
+  const isLast=isLastSlideItem(sec.id);
+  const qBlocks=children.map(q=>{
+    const req=q.required?`<span class="req-badge">Required</span>`:'';
+    return `<div style="display:flex;flex-direction:column">
+      <div class="slide-q" style="font-size:clamp(17px,2.3vw,24px);margin-bottom:4px">${esc(q.question)}${req}</div>
+      ${q.description?`<p class="slide-desc" style="margin-bottom:14px">${esc(q.description)}</p>`:''}
+      ${buildQInput(q)}
+    </div>`;
+  }).join('');
+  const nextCls=isLast?'btn-next btn-submit':'btn-next';
+  const backBtn=secIdx>1?`<button class="btn-back" onclick="prevSlide()">↑ Back</button>`:'';
+  return `<div class="section-slide slide-up" id="sl-${sec.id}"><div class="section-slide-inner">
+    <div class="section-header">
+      <div class="slide-num">Section · ${children.length} question${children.length!==1?'s':''}</div>
+      <h2 style="font-family:var(--fd);font-size:clamp(20px,2.8vw,32px);font-weight:600;letter-spacing:-.5px;line-height:1.2;margin-bottom:4px;color:var(--text)">${esc(sec.title||'Section')}</h2>
+      ${sec.description?`<p class="slide-desc" style="margin-bottom:0">${esc(sec.description)}</p>`:''}
+    </div>
+    <div class="section-qs">${qBlocks}</div>
+    <div class="s-nav" style="margin-top:28px;padding-bottom:28px">
+      ${backBtn}<button class="${nextCls}" onclick="${isLast?'submitForm()':'nextSlide()'}">
+        ${isLast?'Submit →':'Continue →'}
+      </button>
+    </div>
+  </div></div>`;
+}
+
+function buildMatrixSlide(mat){
+  const cols=mat.columns||[];
+  const rows=mat.rows||[];
+  const isLast=isLastSlideItem(mat.id);
+  const matIdx=slideMap.findIndex(s=>s.id===mat.id);
+  const backBtn=matIdx>1?`<button class="btn-back" onclick="prevSlide()">↑ Back</button>`:'';
+  const nextCls=isLast?'btn-next btn-submit':'btn-next';
+  if(!S.answers[mat.id]) S.answers[mat.id]={};
+
+  const tbody=rows.map(row=>{
+    const cells=cols.map(col=>{
+      const key=`${row.id}::${col}`;
+      const curVal=S.answers[mat.id][key];
+      return `<td style="padding:8px 12px;text-align:center;border-bottom:1px solid var(--border);border-right:1px solid var(--border)">${buildMatCell(mat.id,row,col,key,curVal)}</td>`;
+    }).join('');
+    return `<tr><td style="padding:8px 14px;font-weight:600;font-size:13px;color:var(--text);background:var(--surface2);border-bottom:1px solid var(--border);border-right:2px solid var(--border);white-space:nowrap">${esc(row.label)} <span class="mat-row-type-badge" style="font-size:8px;padding:1px 5px">${row.type}</span></td>${cells}</tr>`;
+  }).join('');
+
+  return `<div class="section-slide slide-up" id="sl-${mat.id}"><div class="section-slide-inner">
+    <div class="section-header">
+      <div class="slide-num"><div class="pill pill-orange" style="display:inline-flex">⊞ Matrix</div></div>
+      <h2 style="font-family:var(--fd);font-size:clamp(20px,2.8vw,32px);font-weight:600;letter-spacing:-.5px;line-height:1.2;margin-bottom:4px;color:var(--text)">${esc(mat.title||'Matrix')}</h2>
+      ${mat.description?`<p class="slide-desc" style="margin-bottom:0">${esc(mat.description)}</p>`:''}
+    </div>
+    <div style="flex:1">
+      <div class="matrix-table-wrap">
+        <table class="matrix-table">
+          <thead><tr>
+            <th style="text-align:left">Question</th>
+            ${cols.map(c=>`<th>${esc(c)}</th>`).join('')}
+          </tr></thead>
+          <tbody>${tbody}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="s-nav" style="margin-top:28px;padding-bottom:28px">
+      ${backBtn}<button class="${nextCls}" onclick="${isLast?'submitForm()':'nextSlide()'}">
+        ${isLast?'Submit →':'Continue →'}
+      </button>
+    </div>
+  </div></div>`;
+}
+
+function buildMatCell(matId,row,col,key,curVal){
+  const safeKey=key.replace(/['"]/g,'_');
+  switch(row.type){
+    case 'short': return `<input class="mat-cell-short" placeholder="…" value="${esc(curVal||'')}" oninput="updMatAnswer('${matId}','${safeKey}',this.value)">`;
+    case 'number': return `<input class="mat-cell-num" type="number" placeholder="0" value="${esc(curVal||'')}" oninput="updMatAnswer('${matId}','${safeKey}',this.value)">`;
+    case 'checkbox': return `<input class="mat-cell-chk" type="checkbox" ${curVal?'checked':''} onchange="updMatAnswer('${matId}','${safeKey}',this.checked)">`;
+    case 'radio': return `<input class="mat-cell-radio" type="radio" name="mat-${matId}-${row.id}" ${curVal===col?'checked':''} onchange="updMatAnswer('${matId}','${safeKey}',this.checked?'${esc(col)}':'')">`;
+    case 'rating':
+      const ratingVal=+curVal||0;
+      return `<div class="mat-stars" style="display:flex;gap:2px;justify-content:center">${[1,2,3,4,5].map(n=>`<span class="mat-star ${n<=ratingVal?'lit':''}" onclick="rateMatCell('${matId}','${safeKey}',${n},this)">★</span>`).join('')}</div>`;
+    case 'scale': return `<input class="mat-cell-range" type="range" min="0" max="10" value="${curVal||5}" style="--pct:${((+curVal||5)/10)*100}" oninput="updMatAnswer('${matId}','${safeKey}',+this.value);this.style.setProperty('--pct',(+this.value/10)*100)" title="${curVal||5}">`;
+    default: return `<input class="mat-cell-short" value="${esc(curVal||'')}" oninput="updMatAnswer('${matId}','${safeKey}',this.value)">`;
+  }
+}
+
+function updMatAnswer(matId,key,val){if(!S.answers[matId])S.answers[matId]={};S.answers[matId][key]=val;autoSaveProgress();}
+function rateMatCell(matId,key,n,el){
+  const stars=el.parentElement.querySelectorAll('.mat-star');
+  stars.forEach((s,i)=>s.classList.toggle('lit',i<n));
+  updMatAnswer(matId,key,n);
+}
+
+function isLastSlideItem(id){return slideMap.findIndex(s=>s.id===id)===slideMap.length-2;}
+
+/* ── Build question inputs ── */
+function buildQInput(q){
+  switch(q.type){
+    case 'short': return `<input class="s-input" type="text" id="a-${q.id}" placeholder="Type your answer…" value="${esc(String(S.answers[q.id]||''))}" oninput="S.answers['${q.id}']=this.value;autoSaveProgress()">`;
+    case 'email': return `<input class="s-input" type="email" id="a-${q.id}" placeholder="your@email.com" value="${esc(String(S.answers[q.id]||''))}" oninput="S.answers['${q.id}']=this.value;autoSaveProgress()">`;
+    case 'number': return `<input class="s-input" type="number" id="a-${q.id}" placeholder="0" value="${esc(String(S.answers[q.id]||''))}" oninput="S.answers['${q.id}']=this.value;autoSaveProgress()">`;
+    case 'long': return `<textarea class="s-input" id="a-${q.id}" placeholder="Type your answer…" style="min-height:80px;resize:none" oninput="S.answers['${q.id}']=this.value;autoSaveProgress()">${esc(String(S.answers[q.id]||''))}</textarea>`;
+    case 'yesno': return buildChoiceInput(q,['Yes','No'],false);
+    case 'choice': return buildChoiceInput(q,q.options||[],!!q.multiple,q.other);
+    case 'multibutton': return buildMultiButton(q);
+    case 'three': return buildThreeOptions(q);
+    case 'picturebutton': return buildPicButtons(q);
+    case 'dropdown': return buildDropdown(q);
+    case 'rating': return buildRating(q);
+    case 'scale': return buildScale(q);
+    case 'date': return buildDate(q);
+    default: return `<input class="s-input" id="a-${q.id}" placeholder="…" oninput="S.answers['${q.id}']=this.value">`;
+  }
+}
+function buildChoiceInput(q,opts,multi,other){
+  const letters='ABCDEFGHIJKLMNOP';
+  const cur=S.answers[q.id];
+  const isSel=v=>multi?(Array.isArray(cur)&&cur.includes(v)):cur===v;
+  const items=opts.map((o,i)=>`<div class="s-opt ${isSel(o)?'selected':''}" data-val="${esc(o)}" onclick="chooseOpt('${q.id}',this,${multi})"><span class="opt-key">${letters[i]}</span>${esc(o)}</div>`).join('');
+  const otherBtn=other?`<div class="s-opt" data-val="__other__" onclick="chooseOtherOpt('${q.id}',this)"><span class="opt-key">✎</span>Other…</div>`:'';
+  return `<div class="s-opts" id="a-${q.id}">${items}${otherBtn}</div>`;
+}
+function buildMultiButton(q){
+  const opts=q.options||[],cur=S.answers[q.id]||[];
+  return `<div class="mb-grid" id="a-${q.id}">${opts.map(o=>`<div class="mb-btn ${Array.isArray(cur)&&cur.includes(o)?'selected':''}" data-val="${esc(o)}" onclick="toggleMbBtn('${q.id}',this)">${esc(o)}</div>`).join('')}</div><div style="font-size:11px;color:var(--muted);margin-top:10px;font-weight:500">Select all that apply</div>`;
+}
+function buildThreeOptions(q){
+  const opts=(q.options||['A','B','C']).slice(0,3),icons=(q.icons||['','','']).slice(0,3),cur=S.answers[q.id];
+  return `<div class="three-grid" id="a-${q.id}">${opts.map((o,i)=>`<div class="three-btn ${cur===o?'selected':''}" data-val="${esc(o)}" onclick="chooseThree('${q.id}',this)">${icons[i]?`<span class="t-ico">${esc(icons[i])}</span>`:''}<span>${esc(o)}</span></div>`).join('')}</div>`;
+}
+function buildPicButtons(q){
+  const pics=q.pictures||[];
+  if(!pics.length) return `<div style="color:var(--muted);font-size:13px;padding:16px 0;font-weight:500">No images added. Edit the question to upload images.</div>`;
+  const cur=S.answers[q.id];
+  return `<div class="pic-btns-grid" id="a-${q.id}">${pics.map(p=>`<div class="pic-btn-card ${cur===p.label?'selected':''}" data-val="${esc(p.label||'')}" onclick="choosePicBtn('${q.id}',this)"><div class="pic-btn-wrap"><img src="${p.url||''}" alt="${esc(p.label||'')}"><div class="pic-check">✓</div></div><div class="pic-btn-lbl">${esc(p.label||'')}</div></div>`).join('')}</div>`;
+}
+function buildDropdown(q){
+  const opts=q.options||[],cur=S.answers[q.id];
+  return `<div class="custom-drop-wrap"><div class="custom-drop-trigger ${cur?'has-val':''}" id="drop-trig-${q.id}" onclick="toggleDrop('${q.id}')"><span id="drop-label-${q.id}">${esc(cur)||'Choose an option…'}</span><span class="drop-arrow">▾</span></div><div class="custom-drop-menu" id="drop-menu-${q.id}">${opts.map(o=>`<div class="drop-opt ${cur===o?'sel':''}" data-val="${esc(o)}" onclick="chooseDrop('${q.id}',this)"><div class="drop-dot"></div>${esc(o)}</div>`).join('')}</div></div>`;
+}
+function buildRating(q){
+  const max=q.ratingMax||10,cur=S.answers[q.id]||0;
+  return `<div class="s-rating" id="a-${q.id}">${Array.from({length:max},(_,i)=>`<div class="rate-btn ${i<cur?'sel':''}" onclick="chooseRating('${q.id}',${i+1},this)">${i+1}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;margin-top:7px"><span style="font-size:10px;color:var(--muted);font-weight:600">Not likely</span><span style="font-size:10px;color:var(--muted);font-weight:600">Very likely</span></div>`;
+}
+function buildScale(q){
+  const mn=q.scaleMin??0,mx=q.scaleMax??10,cur=S.answers[q.id]??Math.floor((mn+mx)/2);
+  const pct=Math.round(((cur-mn)/(mx-mn))*100);
+  if(S.answers[q.id]==null) S.answers[q.id]=cur;
+  return `<div><div class="scale-val-display" id="sv-${q.id}">${cur}</div><input type="range" class="custom-range" id="a-${q.id}" min="${mn}" max="${mx}" value="${cur}" style="--pct:${pct}" oninput="updateScale('${q.id}',this,${mn},${mx})"><div class="scale-labels"><span class="scale-lbl">${esc(q.scaleMinLabel||'Not at all')}</span><span class="scale-lbl">${esc(q.scaleMaxLabel||'Completely')}</span></div></div>`;
+}
+function buildDate(q){
+  const saved=S.answers[q.id]||'';let dd='',mm='',yy='';
+  if(saved){const months=['January','February','March','April','May','June','July','August','September','October','November','December'],parts=saved.split(' ');if(parts.length===3){dd=parts[0];mm=String(months.indexOf(parts[1])+1);yy=parts[2];}}
+  const now=new Date();
+  const days=Array.from({length:31},(_,i)=>`<option value="${i+1}" ${dd==i+1?'selected':''}>${i+1}</option>`).join('');
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'].map((m,i)=>`<option value="${i+1}" ${mm==i+1?'selected':''}>${m}</option>`).join('');
+  const years=Array.from({length:80},(_,i)=>`<option value="${now.getFullYear()-i}" ${yy==now.getFullYear()-i?'selected':''}>${now.getFullYear()-i}</option>`).join('');
+  return `<div class="date-grid" id="a-${q.id}"><div><div class="date-part-lbl">Day</div><select class="date-sel" id="dd-${q.id}" onchange="updateDate('${q.id}')">${days}</select></div><div><div class="date-part-lbl">Month</div><select class="date-sel" id="mm-${q.id}" onchange="updateDate('${q.id}')">${months}</select></div><div><div class="date-part-lbl">Year</div><select class="date-sel" id="yy-${q.id}" onchange="updateDate('${q.id}')">${years}</select></div></div><div class="date-display" id="date-disp-${q.id}">${esc(saved)}</div>`;
+}
+
+/* ════════════════════════════════════════════
+   NAVIGATION
+════════════════════════════════════════════ */
+function goSlide(idx){
+  slideMap.forEach((sm,i)=>{
+    const el=document.getElementById(`sl-${sm.id}`);
+    if(!el) return;
+    el.classList.remove('active','slide-up','slide-down');
+    if(i===idx){el.classList.add('slide-up');requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('active')));const inp=el.querySelector('input:not([type=range]):not([type=file]):not([type=checkbox]):not([type=radio]),textarea');if(inp)setTimeout(()=>inp.focus(),320);}
+  });
+  S.currentSlide=idx;
+  const pct=idx===0?0:idx>=slideMap.length-1?100:Math.round(((idx-1)/(slideMap.length-2))*100);
+  document.getElementById('progFill').style.width=pct+'%';
+  if(idx>0&&idx<slideMap.length-1) autoSaveProgress();
+}
+function exitSlide(cb){const sm=slideMap[S.currentSlide],el=document.getElementById(`sl-${sm.id}`);if(el){el.classList.remove('slide-up');el.classList.add('slide-down');el.classList.remove('active');setTimeout(()=>{el.classList.remove('slide-down');cb();},80);}else cb();}
+
+function nextSlide(){
+  const sm=slideMap[S.currentSlide];
+  if(sm.type==='question'){
+    const q=S.items.find(i=>i.id===sm.id);
+    if(q&&q.required){const ans=S.answers[q.id];if(ans==null||ans===''||(Array.isArray(ans)&&!ans.length)){toast('⚠️ This question is required');document.getElementById(`sl-${sm.id}`)?.classList.add('shake');setTimeout(()=>document.getElementById(`sl-${sm.id}`)?.classList.remove('shake'),350);return;}}
+  }
+  if(sm.type==='section'){
+    const sec=S.items.find(i=>i.id===sm.id);
+    if(sec){for(const cq of S.items.filter(q=>q.kind==='question'&&q.sectionId===sec.id)){if(cq.required&&(S.answers[cq.id]==null||S.answers[cq.id]==='')){toast(`⚠️ "${(cq.question||'Q').slice(0,28)}" is required`);document.getElementById(`sl-${sec.id}`)?.classList.add('shake');setTimeout(()=>document.getElementById(`sl-${sec.id}`)?.classList.remove('shake'),350);return;}}}
+  }
+  exitSlide(()=>goSlide(getNextIdx()));
+}
+function getNextIdx(){
+  const sm=slideMap[S.currentSlide];
+  if(sm.type==='question'){const q=S.items.find(i=>i.id===sm.id);if(q&&q.logic&&q.logic.length){const ans=S.answers[q.id],ansStr=Array.isArray(ans)?ans.join(','):String(ans||'');for(const rule of q.logic){let match=rule.condition==='is'?(ansStr===rule.ifValue||(Array.isArray(ans)&&ans.includes(rule.ifValue))):ansStr.toLowerCase().includes(rule.ifValue.toLowerCase());if(match){if(rule.goto==='__end__') return slideMap.length-1;const ti=slideMap.findIndex(s=>s.id===rule.goto);if(ti>-1) return ti;}}}}
+  if(sm.type==='section'){const sec=S.items.find(i=>i.id===sm.id);if(sec&&sec.logic&&sec.logic.length){for(const rule of sec.logic){const ans=S.answers[rule.ifQid];if(ans==null) continue;const ansStr=Array.isArray(ans)?ans.join(','):String(ans||'');if(ansStr===rule.ifValue||(Array.isArray(ans)&&ans.includes(rule.ifValue))){if(rule.goto==='__end__') return slideMap.length-1;const ti=slideMap.findIndex(s=>s.id===rule.goto);if(ti>-1) return ti;}}}}
+  return Math.min(S.currentSlide+1,slideMap.length-1);
+}
+function prevSlide(){if(S.currentSlide<=0)return;exitSlide(()=>goSlide(S.currentSlide-1));}
+function skipSlide(){exitSlide(()=>goSlide(Math.min(S.currentSlide+1,slideMap.length-1)));}
+function resumeProgress(){const p=loadRespondentProgress();if(!p)return;S.answers=p.answers||{};buildPreviewDOM();goSlide(Math.min(p.currentSlide||1,slideMap.length-2));toast('Progress restored ✓');}
+function discardProgress(){clearRespondentProgress();S.answers={};buildPreviewDOM();goSlide(0);toast('Starting fresh');}
+function startOver(){clearRespondentProgress();S.answers={};S.currentSlide=0;buildPreviewDOM();goSlide(0);}
+
+/* ════════════════════════════════════════════
+   INPUT HANDLERS
+════════════════════════════════════════════ */
+function chooseOpt(qid,el,multi){const c=document.getElementById(`a-${qid}`);if(multi){el.classList.toggle('selected');S.answers[qid]=Array.from(c.querySelectorAll('.s-opt.selected')).map(o=>o.dataset.val);}else{c.querySelectorAll('.s-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');S.answers[qid]=el.dataset.val;}autoSaveProgress();}
+function chooseOtherOpt(qid,el){const c=document.getElementById(`a-${qid}`);c.querySelectorAll('.s-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');if(!c.querySelector('.other-inp')){const inp=document.createElement('input');inp.className='s-input other-inp';inp.placeholder='Type your answer…';inp.style.marginTop='10px';inp.oninput=()=>{S.answers[qid]=inp.value;autoSaveProgress();};c.appendChild(inp);setTimeout(()=>inp.focus(),80);}}
+function toggleMbBtn(qid,el){el.classList.toggle('selected');el.classList.add('pop');setTimeout(()=>el.classList.remove('pop'),220);S.answers[qid]=Array.from(document.getElementById(`a-${qid}`).querySelectorAll('.mb-btn.selected')).map(b=>b.dataset.val);autoSaveProgress();}
+function chooseThree(qid,el){const c=document.getElementById(`a-${qid}`);c.querySelectorAll('.three-btn').forEach(b=>b.classList.remove('selected','pop'));el.classList.add('selected','pop');setTimeout(()=>el.classList.remove('pop'),280);S.answers[qid]=el.dataset.val;autoSaveProgress();}
+function choosePicBtn(qid,el){document.getElementById(`a-${qid}`).querySelectorAll('.pic-btn-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');S.answers[qid]=el.dataset.val;autoSaveProgress();}
+let openDropId=null;
+function toggleDrop(qid){if(openDropId&&openDropId!==qid)closeDrop(openDropId);const m=document.getElementById(`drop-menu-${qid}`),t=document.getElementById(`drop-trig-${qid}`),o=m.classList.contains('open');m.classList.toggle('open',!o);t.classList.toggle('open',!o);openDropId=o?null:qid;}
+function closeDrop(qid){document.getElementById(`drop-menu-${qid}`)?.classList.remove('open');document.getElementById(`drop-trig-${qid}`)?.classList.remove('open');openDropId=null;}
+document.addEventListener('click',e=>{if(openDropId&&!e.target.closest('.custom-drop-wrap'))closeDrop(openDropId);});
+function chooseDrop(qid,el){document.getElementById(`drop-menu-${qid}`).querySelectorAll('.drop-opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');S.answers[qid]=el.dataset.val;const lbl=document.getElementById(`drop-label-${qid}`);if(lbl){lbl.textContent=el.dataset.val;lbl.parentElement?.classList.add('has-val');}closeDrop(qid);autoSaveProgress();}
+function chooseRating(qid,val){const c=document.getElementById(`a-${qid}`);c.querySelectorAll('.rate-btn').forEach((b,i)=>b.classList.toggle('sel',i<val));S.answers[qid]=val;autoSaveProgress();}
+function updateScale(qid,inp,mn,mx){const pct=Math.round(((+inp.value-mn)/(mx-mn))*100);inp.style.setProperty('--pct',pct);document.getElementById(`sv-${qid}`).textContent=inp.value;S.answers[qid]=+inp.value;autoSaveProgress();}
+function updateDate(qid){const dd=+document.getElementById(`dd-${qid}`).value,mm=+document.getElementById(`mm-${qid}`).value,yy=+document.getElementById(`yy-${qid}`).value,months=['January','February','March','April','May','June','July','August','September','October','November','December'];if(dd&&mm&&yy){const str=`${dd} ${months[mm-1]} ${yy}`;document.getElementById(`date-disp-${qid}`).textContent=str;S.answers[qid]=str;autoSaveProgress();}}
+document.addEventListener('keydown',e=>{if(document.getElementById('preview').style.display==='none')return;if(e.key==='Enter'&&!e.shiftKey&&e.target.tagName!=='TEXTAREA'&&e.target.tagName!=='SELECT'){const sm=slideMap[S.currentSlide];if(sm&&(sm.type==='question'||sm.type==='welcome'))nextSlide();}});
+
+/* ════════════════════════════════════════════
+   SUBMIT
+════════════════════════════════════════════ */
+function submitForm(){
+  if(S.submitted) return;
+  const sm=slideMap[S.currentSlide];
+  // Validate last slide
+  if(sm.type==='question'){const q=S.items.find(i=>i.id===sm.id);if(q&&q.required){const ans=S.answers[q.id];if(ans==null||ans===''||(Array.isArray(ans)&&!ans.length)){toast('⚠️ This question is required');return;}}}
+  if(sm.type==='section'){const sec=S.items.find(i=>i.id===sm.id);if(sec){for(const cq of S.items.filter(q=>q.kind==='question'&&q.sectionId===sec.id)){if(cq.required&&(S.answers[cq.id]==null||S.answers[cq.id]==='')) {toast(`⚠️ "${(cq.question||'Q').slice(0,25)}" is required`);return;}}}}
+  S.submitted=true;
+  const allQs=S.items.filter(i=>i.kind==='question');
+  const allMats=S.items.filter(i=>i.kind==='matrix');
+  const resp={id:uid(),timestamp:new Date().toISOString(),timestampReadable:new Date().toLocaleString(),formTitle:S.settings.title,answers:{},matrixAnswers:{}};
+  allQs.forEach(q=>{resp.answers[q.id]={question:q.question,type:q.type,value:S.answers[q.id]??null};});
+  allMats.forEach(m=>{resp.matrixAnswers[m.id]={title:m.title,columns:m.columns,rows:m.rows.map(r=>({label:r.label,type:r.type,values:m.columns.reduce((acc,col)=>{const key=`${r.id}::${col}`;acc[col]=S.answers[m.id]?.[key]??null;return acc;},{})}))};});
+  S.responses.push(resp); clearRespondentProgress();
+  document.getElementById('progFill').style.width='100%';
+  exitSlide(()=>goSlide(slideMap.length-1));
+  toast('🎉 Submitted!');
+
+  // ── Save to Firestore via Cloud Function ──────────────────────────────────
+  // DEPLOY_API_URL is replaced automatically during build (see DEPLOYMENT.md).
+  // In development (file:// or localhost) the fetch is simply skipped.
+  const apiUrl = window.__FF_API_URL__;   // injected by build script
+  if (apiUrl) {
+    fetch(apiUrl + '/api/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(resp)
+    })
+    .then(r => r.json())
+    .then(d => { if (!d.success) console.warn('Submit warning:', d); })
+    .catch(e => console.warn('Offline — response saved locally only:', e));
+  }
+}
+
+/* ════════════════════════════════════════════
+   RESULTS
+════════════════════════════════════════════ */
+function renderResults(){
+  document.getElementById('rTitle').textContent=S.settings.title+' — Results';
+  const n=S.responses.length;
+  document.getElementById('rSub').textContent=`${n} response${n!==1?'s':''}`;
+  document.getElementById('sViews').textContent=S.views;
+  document.getElementById('sResp').textContent=n;
+  document.getElementById('sRate').textContent=S.views>0?Math.round((n/S.views)*100)+'%':'—';
+  const t=document.getElementById('respTable');
+  if(!n){t.innerHTML=`<div class="empty-state"><div class="empty-ico">📭</div><div class="empty-ttl">No responses yet</div><div class="empty-sub">Preview the form and submit to see results</div></div>`;return;}
+  const allQs=S.items.filter(i=>i.kind==='question');
+  const allMats=S.items.filter(i=>i.kind==='matrix');
+  t.innerHTML=S.responses.map((r,i)=>{
+    const qRows=allQs.map(q=>{const a=r.answers[q.id];if(!a||a.value==null)return '';const v=Array.isArray(a.value)?a.value.join(', '):String(a.value);return `<div class="resp-row"><span class="resp-q">${esc((a.question||'').slice(0,40))}</span><span class="resp-a">${esc(v)}</span></div>`;}).filter(Boolean).join('');
+    const matRows=allMats.map(m=>{const ma=r.matrixAnswers?.[m.id];if(!ma)return '';return `<div class="resp-row" style="display:block"><span class="resp-q" style="display:block;margin-bottom:4px">⊞ ${esc(ma.title)}</span><div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;width:100%"><tr><th style="padding:3px 8px;background:var(--surface2);border:1px solid var(--border);text-align:left">Row</th>${(ma.columns||[]).map(c=>`<th style="padding:3px 8px;background:var(--surface2);border:1px solid var(--border)">${esc(c)}</th>`).join('')}</tr>${(ma.rows||[]).map(row=>`<tr><td style="padding:3px 8px;border:1px solid var(--border);font-weight:600">${esc(row.label)}</td>${(ma.columns||[]).map(col=>`<td style="padding:3px 8px;border:1px solid var(--border);text-align:center">${esc(String(row.values?.[col]??'—'))}</td>`).join('')}</tr>`).join('')}</table></div></div>`;}).filter(Boolean).join('');
+    return `<div class="resp-entry"><div class="resp-meta">Response #${i+1} · ${r.timestampReadable}</div>${qRows}${matRows||(!qRows?'<span style="color:var(--muted);font-size:11px">No answers recorded</span>':'')}</div>`;
+  }).join('');
+}
+function clearAll(){if(!confirm('Delete all responses?'))return;S.responses=[];S.views=0;renderResults();toast('Cleared');}
+function exportCSV(){
+  if(!S.responses.length){toast('No responses');return;}
+  const allQs=S.items.filter(i=>i.kind==='question');
+  const hdr=['ID','Timestamp',...allQs.map(q=>q.question)];
+  const rows=S.responses.map(r=>[r.id,r.timestampReadable,...allQs.map(q=>{const a=r.answers[q.id];return a?Array.isArray(a.value)?a.value.join('; '):(a.value??''):''})]);
+  dl([hdr,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv',S.settings.title+'-responses.csv');toast('CSV exported ↓');
+}
+function exportJSON(){if(!S.responses.length){toast('No responses');return;}dl(JSON.stringify({formTitle:S.settings.title,exportedAt:new Date().toISOString(),responses:S.responses},null,2),'application/json',S.settings.title+'-responses.json');toast('JSON exported ↓');}
+function dl(c,m,n){const a=document.createElement('a');a.href='data:'+m+';charset=utf-8,'+encodeURIComponent(c);a.download=n;a.click();}
+
+/* Misc */
+function openShare(){document.getElementById('shareModal').classList.add('show');}
+function closeShare(){document.getElementById('shareModal').classList.remove('show');}
+function copyLink(){navigator.clipboard.writeText(document.getElementById('shareUrl').value).catch(()=>{});toast('Copied ✓');}
+let _toastT;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('show'),2400);}
+/* ════════════════════════════════════════════
+   HTML STANDALONE EXPORT
+════════════════════════════════════════════ */
+function exportHTML() {
+  // 1. Clone the entire document structure
+  const rootClone = document.documentElement.cloneNode(true);
+
+  // 2. Remove Builder-specific UI panels from the clone
+  const builderUI = rootClone.querySelector('#builder');
+  if (builderUI) builderUI.remove();
+
+  const shareModal = rootClone.querySelector('#shareModal');
+  if (shareModal) shareModal.remove();
+
+  // 3. Make the Preview view visible by default
+  const previewUI = rootClone.querySelector('#preview');
+  if (previewUI) {
+    previewUI.style.display = 'flex';
+    previewUI.classList.remove('hidden');
+  }
+
+  // Hide the "Back to Edit" button and "Preview" pill for the end-user
+  const backBtn = rootClone.querySelector('.prev-nav .btn-ghost');
+  if (backBtn) backBtn.remove();
+  const previewPill = rootClone.querySelector('.prev-nav .pill-purple');
+  if (previewPill) previewPill.remove();
+
+  // 4. Inject the runtime configuration and getpantry override
+  const injectedScript = document.createElement('script');
+  injectedScript.textContent = `
+    // --- STANDALONE FORM CONFIGURATION ---
+    // ADD YOUR GETPANTRY POST URL HERE:
+    const PANTRY_URL = "https://getpantry.cloud/apiv1/pantry/5cb11065-c901-4c2d-a999-b170c23c7e33/basket/QuantifAI";
+
+    // Inject the current form state hardcoded into the file
+    S.items = ${JSON.stringify(S.items)};
+    S.settings = ${JSON.stringify(S.settings)};
+
+    // Force preview mode on page load
+    window.onload = () => {
+      applyStyleSettings();
+      document.getElementById('preview').style.display = 'flex';
+      document.getElementById('preview').classList.remove('hidden');
+      launchPreview();
+    };
+
+    // Override the submission function to send data to Pantry
+    submitForm = function() {
+      if(S.submitted) return;
+      const sm = slideMap[S.currentSlide];
+
+      // Run standard form validations
+      if(sm.type==='question'){const q=S.items.find(i=>i.id===sm.id);if(q&&q.required){const ans=S.answers[q.id];if(ans==null||ans===''||(Array.isArray(ans)&&!ans.length)){toast('⚠️ This question is required');return;}}}
+      if(sm.type==='section'){const sec=S.items.find(i=>i.id===sm.id);if(sec){for(const cq of S.items.filter(q=>q.kind==='question'&&q.sectionId===sec.id)){if(cq.required&&(S.answers[cq.id]==null||S.answers[cq.id]==='')) {toast('⚠️ "'+(cq.question||'Q').slice(0,25)+'" is required');return;}}}}
+
+      S.submitted = true;
+      const allQs = S.items.filter(i=>i.kind==='question');
+      const allMats = S.items.filter(i=>i.kind==='matrix');
+
+      // Construct JSON payload
+      const resp = {
+        id: uid(),
+        timestamp: new Date().toISOString(),
+        formTitle: S.settings.title,
+        answers: {},
+        matrixAnswers: {}
       };
-      fi.click();
-    });
-  });
 
-  document.querySelectorAll('.input-before,.input-after,.input-manual,.input-trb,.input-tasx,.cell-feedback').forEach(el=>{
-    el.addEventListener('input', e=>{
-      const q = +el.dataset.q, col = +el.dataset.col;
-      const key = QUESTIONS[q];
-      const proj = state.projects[col];
-      if(!proj.answers) proj.answers = {};
-      if(!proj.answers[key]) proj.answers[key] = { before:"", after:"", manual:"", trb:"", tasx:"", feedback:"" };
-      const field = el.classList.contains('input-before') ? 'before' :
-                    el.classList.contains('input-after') ? 'after' :
-                    el.classList.contains('input-manual') ? 'manual' :
-                    el.classList.contains('input-trb') ? 'trb' :
-                    el.classList.contains('input-tasx') ? 'tasx' : 'feedback';
-      proj.answers[key][field] = el.value;
-      if(el.tagName === 'TEXTAREA') autoResize(el);
-      saveState();
-    });
-    el.addEventListener('keydown', navHandler);
-    el.addEventListener('focus', () => el.classList.add('focus-cell'));
-    el.addEventListener('blur', () => el.classList.remove('focus-cell'));
-    if(el.tagName === 'TEXTAREA') autoResize(el);
-  });
+      allQs.forEach(q=>{resp.answers[q.id]={question:q.question,type:q.type,value:S.answers[q.id]??null};});
+      allMats.forEach(m=>{resp.matrixAnswers[m.id]={title:m.title,columns:m.columns,rows:m.rows.map(r=>({label:r.label,type:r.type,values:m.columns.reduce((acc,col)=>{const key=r.id+'::'+col;acc[col]=S.answers[m.id]?.[key]??null;return acc;},{})}))};});
+
+      // Show success sequence
+      clearRespondentProgress();
+      document.getElementById('progFill').style.width='100%';
+      exitSlide(()=>goSlide(slideMap.length-1));
+      toast('🎉 Submitted!');
+
+      // PANTRY POST REQUEST
+      if (PANTRY_URL) {
+        fetch(PANTRY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(resp)
+        })
+        .then(r => console.log('Successfully saved to Pantry!'))
+        .catch(e => console.error('Failed to save to Pantry:', e));
+      } else {
+        console.warn('Pantry URL not set! Form data was not sent.');
+      }
+    };
+  `;
+
+  // Append the override script to the cloned body
+  rootClone.querySelector('body').appendChild(injectedScript);
+
+  // 5. Generate final HTML string and trigger the download
+  const htmlContent = "<!DOCTYPE html>\n" + rootClone.outerHTML;
+  const fileName = (S.settings.title || 'Form').replace(/\s+/g, '-').toLowerCase() + '-standalone.html';
+  
+  // Uses the existing dl() function your colleague built
+  dl(htmlContent, 'text/html', fileName); 
+  toast('HTML Exported ↓');
 }
-
-/* ---------- Keyboard Navigation ---------- */
-function navHandler(e){
-  const el = e.target;
-  const q = +el.dataset.q;
-  const col = +el.dataset.col;
-  const isDual = q === 0 || q === 6;
-  const key = e.key;
-  if(!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Tab","Enter"].includes(key)) return;
-  e.preventDefault();
-
-  function focus(qq, cc, type){
-    if(qq < 0 || qq >= QUESTIONS.length || cc < 0 || cc >= state.projects.length) return false;
-    const sel = type === 'before' ? `.input-before[data-q="${qq}"][data-col="${cc}"]` :
-                type === 'after'  ? `.input-after[data-q="${qq}"][data-col="${cc}"]` :
-                type === 'manual' ? `.input-manual[data-q="${qq}"][data-col="${cc}"]` :
-                type === 'trb'    ? `.input-trb[data-q="${qq}"][data-col="${cc}"]` :
-                type === 'tasx'   ? `.input-tasx[data-q="${qq}"][data-col="${cc}"]` :
-                                    `.cell-feedback[data-q="${qq}"][data-col="${cc}"]`;
-    const target = document.querySelector(sel);
-    if(target) { target.focus(); return true; }
-    return false;
-  }
-
-  if(key === "ArrowRight" || (key === "Tab" && !e.shiftKey)){
-    if(isDual){
-      if(el.classList.contains('input-before') && focus(q, col, 'after')) return;
-      if((el.classList.contains('input-before') || el.classList.contains('input-after')) && focus(q, col, 'feedback')) return;
-    } else {
-      if(el.classList.contains('input-manual') && focus(q, col, 'trb')) return;
-      if(el.classList.contains('input-trb') && focus(q, col, 'tasx')) return;
-      if((el.classList.contains('input-manual') || el.classList.contains('input-trb') || el.classList.contains('input-tasx')) && focus(q, col, 'feedback')) return;
-    }
-    focus(q, col+1, isDual ? 'before' : 'manual');
-  }
-
-  if(key === "ArrowLeft" || (key === "Tab" && e.shiftKey)){
-    if(isDual){
-      if(el.classList.contains('input-after') && focus(q, col, 'before')) return;
-      if(el.classList.contains('cell-feedback') && focus(q, col, 'after')) return;
-    } else {
-      if(el.classList.contains('input-trb') && focus(q, col, 'manual')) return;
-      if(el.classList.contains('input-tasx') && focus(q, col, 'trb')) return;
-      if(el.classList.contains('cell-feedback') && focus(q, col, 'tasx')) return;
-    }
-    focus(q, col-1, 'feedback');
-  }
-
-  if(key === "ArrowDown" || key === "Enter"){
-    if(el.classList.contains('cell-feedback')){
-      focus(q+1, col, isDual ? 'before' : 'manual');
-    } else {
-      focus(q, col, 'feedback');
-    }
-  }
-
-  if(key === "ArrowUp"){
-    if(el.classList.contains('cell-feedback')){
-      focus(q, col, isDual ? 'after' : 'tasx');
-    } else {
-      focus(q-1, col, 'feedback');
-    }
-  }
-}
-
-/* ---------- Helpers ---------- */
-function autoResize(ta){
-  ta.style.height = "auto";
-  ta.style.height = ta.scrollHeight + "px";
-}
-
-/* ---------- Rebuild ---------- */
-function rebuild(){ renderHeader(); renderBody(); wireUp(); }
-
-/* ---------- Buttons ---------- */
-document.getElementById('addProject').addEventListener('click', ()=>{
-  const next = state.projects.length + 1;
-  state.projects.push({ name:`Project ${next}`, screenshot:null, screenshotName:"", answers:{} });
-  saveState(); rebuild();
-  setTimeout(()=>{ document.querySelector(`.proj-name[data-proj="${state.projects.length-1}"]`)?.focus(); },60);
-});
-
-document.getElementById('removeProject').addEventListener('click', ()=>{
-  if(state.projects.length<=1) return;
-  state.projects.pop(); saveState(); rebuild();
-});
-
-document.getElementById('resetBtn').addEventListener('click', ()=>{
-  if(!confirm("Reset saved POC? This clears local storage and restores three sample projects.")) return;
-  localStorage.removeItem(STORAGE_KEY);
-  state = { companyName:"", projects:[
-    {name:"Project 1",screenshot:null,screenshotName:"",answers:{}},
-    {name:"Project 2",screenshot:null,screenshotName:"",answers:{}},
-    {name:"Project 3",screenshot:null,screenshotName:"",answers:{}}
-  ]};
-  saveState(); rebuild();
-});
-
-/* ---------- SUBMIT TO PANTRY ---------- */
-document.getElementById('submitBtn').addEventListener('click', async ()=>{
-  document.querySelectorAll('.input-before,.input-after,.input-manual,.input-trb,.input-tasx,.cell-feedback').forEach(el=>{
-    const q = +el.dataset.q, col = +el.dataset.col;
-    const key = QUESTIONS[q];
-    const proj = state.projects[col];
-    if(!proj.answers) proj.answers = {};
-    if(!proj.answers[key]) proj.answers[key] = { before:"", after:"", manual:"", trb:"", tasx:"", feedback:"" };
-    const field = el.classList.contains('input-before') ? 'before' :
-                  el.classList.contains('input-after') ? 'after' :
-                  el.classList.contains('input-manual') ? 'manual' :
-                  el.classList.contains('input-trb') ? 'trb' :
-                  el.classList.contains('input-tasx') ? 'tasx' : 'feedback';
-    proj.answers[key][field] = el.value;
-  });
-  state.companyName = document.getElementById('companyName').value.trim();
-  saveState();
-
-  const submission = JSON.parse(JSON.stringify(state));
-  submission.submittedAt = new Date().toISOString();
-
-  const BASKET_ID = 'tasx-survey-2025'; // CHANGE TO YOUR BASKET
-  const BASE_URL = `https://getpantry.cloud/apiv1/pantries/${BASKET_ID}`;
-
-  try{
-    let current = { submissions: [] };
-    const getRes = await fetch(`https://getpantry.cloud/apiv1/pantry/2ecc5a54-3399-434b-8dec-0ac9bd307b65/basket/jsonBasket`);
-    if(getRes.ok) current = await getRes.json();
-    if(!Array.isArray(current.submissions)) current.submissions = [];
-
-    current.submissions.push(submission);
-
-    const putRes = await fetch(`https://getpantry.cloud/apiv1/pantry/2ecc5a54-3399-434b-8dec-0ac9bd307b65/basket/jsonBasket`,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(current)
-    });
-    if(!putRes.ok) throw new Error(`PUT failed: ${putRes.status}`);
-
-    console.log('Saved – total:', current.submissions.length);
-    showSuccess();
-  }catch(err){
-    console.error('Pantry error:',err);
-    alert('Could not save to Pantry – check console.');
-  }
-});
-
-/* ---------- Start ---------- */
-rebuild();
 </script>
-</body>
-</html>
+
+
+<script>
+    // --- STANDALONE FORM CONFIGURATION ---
+    // ADD YOUR GETPANTRY POST URL HERE:
+    const PANTRY_URL = "https://getpantry.cloud/apiv1/pantry/5cb11065-c901-4c2d-a999-b170c23c7e33/basket/QuantifAI";
+
+    // Inject the current form state hardcoded into the file
+    S.items = [{"id":"skm0m3l","kind":"question","type":"short","question":"What's your name?","description":"We'd love to know who we're talking to.","required":true},{"id":"j4ytno0","kind":"question","type":"choice","question":"How did you hear about us?","description":"","options":["Social media","Friend","Search engine","Other"],"multiple":false,"other":false},{"id":"3w2vc22","kind":"section","title":"Your Experience","description":"Tell us how it went","logic":[]},{"id":"44m4kqw","kind":"question","sectionId":"3w2vc22","type":"rating","question":"How would you rate your overall experience?","description":"10 = amazing!","ratingMax":10},{"id":"rxnkvy5","kind":"question","sectionId":"3w2vc22","type":"long","question":"Any additional comments?","description":"We read every response."},{"id":"c2pwjra","kind":"section","title":"Share us some of your project information","description":"","logic":[]},{"id":"jjxeu8p","kind":"question","type":"short","required":false,"question":"Project Name","description":"","sectionId":"c2pwjra"},{"id":"gmhkz5t","kind":"question","type":"short","required":false,"question":"Project Scale","description":"in GFA (m2)","sectionId":"c2pwjra"},{"id":"sdre5sj","kind":"question","type":"short","required":false,"question":"Type of project","description":"Commercial, Residential, Hospital, etc.","sectionId":"c2pwjra"},{"id":"p2k0438","kind":"question","type":"rating","required":false,"question":"From the scale of 1-10, how complex do you rate this project?","description":"10=Totally difficult","ratingMax":10,"sectionId":"c2pwjra"},{"id":"y1547x6","kind":"question","type":"short","required":false,"question":"Roughly in range, how many BQ items are inside the BQ (for structural & architectural works)?","description":"","sectionId":"c2pwjra"},{"id":"gm600oc","kind":"section","title":"Drawing Management","description":"","logic":[]},{"id":"dlvqc5o","kind":"question","type":"rating","required":false,"question":"From the scale of 1-10, How would you rate the overall functionality of the drawing management?","description":"10=Totally Awesome","ratingMax":10,"sectionId":"gm600oc"},{"id":"9y36pfp","kind":"question","type":"short","required":false,"question":"Which feature is the most helpful to you in drawing management function group?","description":"","sectionId":"gm600oc"},{"id":"0x4qszt","kind":"question","type":"short","required":false,"question":"Which feature do you like the most in drawing management function group?","description":"","sectionId":"gm600oc"},{"id":"dzi52it","kind":"section","title":"User Interface","description":"","logic":[]},{"id":"s717zk8","kind":"question","type":"rating","required":false,"question":"From the scale of 1-10, how much do you like the new UI/UX?","description":"10=Totally Awesome","ratingMax":10,"sectionId":"dzi52it"},{"id":"ofcj0vq","kind":"question","type":"short","required":false,"question":"Feedback on UI/UX","description":"","sectionId":"dzi52it"},{"id":"00u8umg","kind":"section","title":"Structural + Rebar Modeling","description":"","logic":[]},{"id":"lct64y1","kind":"question","type":"rating","required":false,"question":"Overall experience","description":"From the scale of 1-10, how easy it is to do structural (concrete) modeling in QuantifAI? (10=Totally Awesome)","ratingMax":10,"sectionId":"00u8umg"},{"id":"oojlbuo","kind":"question","type":"short","required":false,"question":"Overall experience","description":"During this modeling process, do you find elements that the software can't accommodate yet?","sectionId":"00u8umg"},{"id":"p15rit7","kind":"matrix","title":"Beam Rebar","description":"","columns":["Satisfaction"],"rows":[{"id":"pvaor45","label":"Smart table","type":"rating"},{"id":"78pj2hs","label":"AI section identify","type":"rating"},{"id":"cxmj1jv","label":" AI side label identify","type":"rating"},{"id":"sxyfknx","label":"Which of the above used more?","type":"short"}]},{"id":"yv1pfm6","kind":"matrix","title":"Vertical Structure Rebar","description":"","columns":["Satisfaction"],"rows":[{"id":"mc9g822","label":"Easiness to use Column Edit Section","type":"rating"},{"id":"s5a20vt","label":"How do you often need to use Column Edit Section?","type":"rating"},{"id":"suy7xoh","label":"Easiness to use Wall Edit Section","type":"rating"},{"id":"sigu5y8","label":"How do you often need to use Wall Edit Section?","type":"rating"}]},{"id":"glwmo4d","kind":"matrix","title":"Slab Rebar","description":"","columns":["Satisfaction"],"rows":[{"id":"dteaqp1","label":"Easiness to use Parametric Arrangement","type":"rating"},{"id":"qzefpie","label":"Easiness to use Merge Main Bar","type":"rating"},{"id":"dyqxh64","label":"How do you often need to use Merge Main Bar?","type":"rating"}]},{"id":"tdv1in9","kind":"section","title":"Finishes","description":"","logic":[]},{"id":"tgwf2j2","kind":"question","type":"rating","required":false,"question":"Rate your experience","description":"From the scale of 1-10, how easy it is to do finishes modeling in QuantifAI? 10=Totally Awesome","ratingMax":10,"sectionId":"tdv1in9"},{"id":"ep56zfe","kind":"question","type":"short","required":false,"question":"During this modeling process, do you find elements that the software can't accommodate yet?","description":"","sectionId":"tdv1in9"},{"id":"qy6z5zl","kind":"question","type":"short","required":false,"question":"Among Finish elements, which feature or element should be improved?","description":"","sectionId":"tdv1in9"},{"id":"dyjxsco","kind":"matrix","title":"Quantity Report","description":"","columns":["Satisfaction"],"rows":[{"id":"qhz02vw","label":"How do you evaluate our report module?","type":"rating"},{"id":"kjehuj7","label":"How frequently do you use the report module compare with View QTY by Category","type":"rating"}]},{"id":"tv1v1va","kind":"section","title":"Other Features","description":"","logic":[]},{"id":"iu3uugi","kind":"question","type":"rating","required":false,"question":"From the scale of 1-10, how much will you rate the 2-in-1 capability in this software? ","description":"10=Totally Awesome","ratingMax":10,"sectionId":"tv1v1va"},{"id":"6xjwh7r","kind":"question","type":"rating","required":false,"question":"From the scale of 1-10, how much will you rate the multiple project capability in this software?","description":"10=Totally Awesome","ratingMax":10,"sectionId":"tv1v1va"},{"id":"7gxjt8r","kind":"question","type":"short","required":false,"question":"Describe how you feel about this software to support your daily work.","description":"","sectionId":"tv1v1va"}];
+    S.settings = {"title":"QuantifAI Survey","accent":"#5b3ef8","font":"Syne","welcome":{"title":"Welcome! 👋","subtitle":"This form will only take a few minutes.","buttonText":"Let's go →","drawing":null},"end":{"title":"All done! 🎉","subtitle":"Thank you so much for your responses.","drawing":null}};
+
+    // Force preview mode on page load
+    window.onload = () => {
+      applyStyleSettings();
+      document.getElementById('preview').style.display = 'flex';
+      document.getElementById('preview').classList.remove('hidden');
+      launchPreview();
+    };
+
+    // Override the submission function to send data to Pantry
+    submitForm = function() {
+      if(S.submitted) return;
+      const sm = slideMap[S.currentSlide];
+
+      // Run standard form validations
+      if(sm.type==='question'){const q=S.items.find(i=>i.id===sm.id);if(q&&q.required){const ans=S.answers[q.id];if(ans==null||ans===''||(Array.isArray(ans)&&!ans.length)){toast('⚠️ This question is required');return;}}}
+      if(sm.type==='section'){const sec=S.items.find(i=>i.id===sm.id);if(sec){for(const cq of S.items.filter(q=>q.kind==='question'&&q.sectionId===sec.id)){if(cq.required&&(S.answers[cq.id]==null||S.answers[cq.id]==='')) {toast('⚠️ "'+(cq.question||'Q').slice(0,25)+'" is required');return;}}}}
+
+      S.submitted = true;
+      const allQs = S.items.filter(i=>i.kind==='question');
+      const allMats = S.items.filter(i=>i.kind==='matrix');
+
+      // Construct JSON payload
+      const resp = {
+        id: uid(),
+        timestamp: new Date().toISOString(),
+        formTitle: S.settings.title,
+        answers: {},
+        matrixAnswers: {}
+      };
+
+      allQs.forEach(q=>{resp.answers[q.id]={question:q.question,type:q.type,value:S.answers[q.id]??null};});
+      allMats.forEach(m=>{resp.matrixAnswers[m.id]={title:m.title,columns:m.columns,rows:m.rows.map(r=>({label:r.label,type:r.type,values:m.columns.reduce((acc,col)=>{const key=r.id+'::'+col;acc[col]=S.answers[m.id]?.[key]??null;return acc;},{})}))};});
+
+      // Show success sequence
+      clearRespondentProgress();
+      document.getElementById('progFill').style.width='100%';
+      exitSlide(()=>goSlide(slideMap.length-1));
+      toast('🎉 Submitted!');
+
+      // PANTRY POST REQUEST
+      if (PANTRY_URL) {
+        fetch(PANTRY_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(resp)
+        })
+        .then(r => console.log('Successfully saved to Pantry!'))
+        .catch(e => console.error('Failed to save to Pantry:', e));
+      } else {
+        console.warn('Pantry URL not set! Form data was not sent.');
+      }
+    };
+  </script></body></html>
