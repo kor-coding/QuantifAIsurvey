@@ -507,7 +507,7 @@ kbd{background:var(--surface2);border:1.5px solid var(--border);border-radius:4p
 <!-- Share Modal -->
 
 
-<div class="toast" id="toast">Question added</div>
+<div class="toast" id="toast"></div>
 
 <script>
 /* ════════════════════════════════════════════
@@ -1685,10 +1685,9 @@ function exportHTML() {
   const injectedScript = document.createElement('script');
   injectedScript.textContent = `
     // --- STANDALONE FORM CONFIGURATION ---
-    // ADD YOUR GETPANTRY POST URL HERE:
     const PANTRY_URL = "https://getpantry.cloud/apiv1/pantry/5cb11065-c901-4c2d-a999-b170c23c7e33/basket/QuantifAI";
 
-    // Inject the current form state hardcoded into the file
+    // Inject the current form state
     S.items = ${JSON.stringify(S.items)};
     S.settings = ${JSON.stringify(S.settings)};
 
@@ -1700,20 +1699,39 @@ function exportHTML() {
       launchPreview();
     };
 
-    // Override the submission function to send data to Pantry
-    submitForm = function() {
-      if(S.submitted) return;
+    // ── UPDATED submitForm: APPEND instead of REPLACE ─────────────────────
+    submitForm = async function() {
+      if (S.submitted) return;
       const sm = slideMap[S.currentSlide];
 
-      // Run standard form validations
-      if(sm.type==='question'){const q=S.items.find(i=>i.id===sm.id);if(q&&q.required){const ans=S.answers[q.id];if(ans==null||ans===''||(Array.isArray(ans)&&!ans.length)){toast('⚠️ This question is required');return;}}}
-      if(sm.type==='section'){const sec=S.items.find(i=>i.id===sm.id);if(sec){for(const cq of S.items.filter(q=>q.kind==='question'&&q.sectionId===sec.id)){if(cq.required&&(S.answers[cq.id]==null||S.answers[cq.id]==='')) {toast('⚠️ "'+(cq.question||'Q').slice(0,25)+'" is required');return;}}}}
+      // Validation (unchanged)
+      if (sm.type === 'question') {
+        const q = S.items.find(i => i.id === sm.id);
+        if (q && q.required) {
+          const ans = S.answers[q.id];
+          if (ans == null || ans === '' || (Array.isArray(ans) && !ans.length)) {
+            toast('⚠️ This question is required');
+            return;
+          }
+        }
+      }
+      if (sm.type === 'section') {
+        const sec = S.items.find(i => i.id === sm.id);
+        if (sec) {
+          for (const cq of S.items.filter(q => q.kind === 'question' && q.sectionId === sec.id)) {
+            if (cq.required && (S.answers[cq.id] == null || S.answers[cq.id] === '')) {
+              toast('⚠️ "' + (cq.question || 'Q').slice(0,25) + '" is required');
+              return;
+            }
+          }
+        }
+      }
 
       S.submitted = true;
-      const allQs = S.items.filter(i=>i.kind==='question');
-      const allMats = S.items.filter(i=>i.kind==='matrix');
 
-      // Construct JSON payload
+      const allQs = S.items.filter(i => i.kind === 'question');
+      const allMats = S.items.filter(i => i.kind === 'matrix');
+
       const resp = {
         id: uid(),
         timestamp: new Date().toISOString(),
@@ -1722,36 +1740,68 @@ function exportHTML() {
         matrixAnswers: {}
       };
 
-      allQs.forEach(q=>{resp.answers[q.id]={question:q.question,type:q.type,value:S.answers[q.id]??null};});
-      allMats.forEach(m=>{resp.matrixAnswers[m.id]={title:m.title,columns:m.columns,rows:m.rows.map(r=>({label:r.label,type:r.type,values:m.columns.reduce((acc,col)=>{const key=r.id+'::'+col;acc[col]=S.answers[m.id]?.[key]??null;return acc;},{})}))};});
+      allQs.forEach(q => { resp.answers[q.id] = { question: q.question, type: q.type, value: S.answers[q.id] ?? null }; });
+      allMats.forEach(m => {
+        resp.matrixAnswers[m.id] = {
+          title: m.title,
+          columns: m.columns,
+          rows: m.rows.map(r => ({
+            label: r.label,
+            type: r.type,
+            values: m.columns.reduce((acc, col) => {
+              const key = r.id + '::' + col;
+              acc[col] = S.answers[m.id]?.[key] ?? null;
+              return acc;
+            }, {})
+          }))
+        };
+      });
 
-      // Show success sequence
+      // Show success UI
       clearRespondentProgress();
-      document.getElementById('progFill').style.width='100%';
-      exitSlide(()=>goSlide(slideMap.length-1));
+      document.getElementById('progFill').style.width = '100%';
+      exitSlide(() => goSlide(slideMap.length - 1));
       toast('🎉 Submitted!');
 
-      // PANTRY POST REQUEST
+      // ── APPEND to GetPantry (the fix) ─────────────────────────────
       if (PANTRY_URL) {
-        fetch(PANTRY_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(resp)
-        })
-        .then(r => console.log('Successfully saved to Pantry!'))
-        .catch(e => console.error('Failed to save to Pantry:', e));
-      } else {
-        console.warn('Pantry URL not set! Form data was not sent.');
+        try {
+          // 1. Get current data
+          const getRes = await fetch(PANTRY_URL, { method: 'GET' });
+          let current = [];
+          if (getRes.ok) {
+            const data = await getRes.json();
+            if (Array.isArray(data)) current = data;
+            else if (data) current = [data];           // first submission
+          }
+
+          // 2. Append new response
+          current.push(resp);
+
+          // 3. Write full array back
+          await fetch(PANTRY_URL, {
+            method: 'PUT',                              // ← important
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(current)
+          });
+
+          console.log('✅ Appended to Pantry basket successfully');
+        } catch (e) {
+          console.error('Failed to save to Pantry:', e);
+          // still works offline — data is only in local memory
+        }
       }
     };
   `;
 
-  // Append the override script to the cloned body
+  // Append the override script
   rootClone.querySelector('body').appendChild(injectedScript);
 
-  // 5. Generate final HTML string and trigger the download
+  // 5. Generate final HTML
   const htmlContent = "<!DOCTYPE html>\n" + rootClone.outerHTML;
   const fileName = (S.settings.title || 'Form').replace(/\s+/g, '-').toLowerCase() + '-standalone.html';
+  dl(htmlContent, 'text/html', fileName);
+  toast('HTML Exported ↓');
   
   // Uses the existing dl() function your colleague built
   dl(htmlContent, 'text/html', fileName); 
@@ -1762,10 +1812,9 @@ function exportHTML() {
 
 <script>
     // --- STANDALONE FORM CONFIGURATION ---
-    // ADD YOUR GETPANTRY POST URL HERE:
     const PANTRY_URL = "https://getpantry.cloud/apiv1/pantry/5cb11065-c901-4c2d-a999-b170c23c7e33/basket/QuantifAI";
 
-    // Inject the current form state hardcoded into the file
+    // Inject the current form state
     S.items = [{"id":"skm0m3l","kind":"question","type":"short","question":"What's your name?","description":"We'd love to know who we're talking to.","required":true},{"id":"3w2vc22","kind":"section","title":"Your Experience","description":"Tell us how it went","logic":[]},{"id":"44m4kqw","kind":"question","sectionId":"3w2vc22","type":"rating","question":"How would you rate your overall experience with QuantifAI?","description":"10 = amazing!","ratingMax":10,"required":true},{"id":"rxnkvy5","kind":"question","sectionId":"3w2vc22","type":"long","question":"Describe how you feel about this software to support your daily work.","description":"We read every response.","required":true},{"id":"hz16qv1","kind":"question","type":"short","required":true,"question":"Compared with the previous version (TRB), how many times faster do you feel QuantifAI is?","description":"feel free to tell us how long previously spent, how long it takes currently in QuantifAI","sectionId":"3w2vc22"},{"id":"cgmmepv","kind":"question","type":"short","required":true,"question":"Compared with Manual (Excel or other), how many times faster do you feel QuantifAI is?","description":"feel free to tell us how long previously spent, how long it takes currently in QuantifAI","sectionId":"3w2vc22"},{"id":"c2pwjra","kind":"section","title":"Share us some of your project information","description":"","logic":[]},{"id":"jjxeu8p","kind":"question","type":"short","required":true,"question":"Project Name","description":"","sectionId":"c2pwjra"},{"id":"gmhkz5t","kind":"question","type":"short","required":true,"question":"Project Scale","description":"in GFA (m2)","sectionId":"c2pwjra"},{"id":"sdre5sj","kind":"question","type":"short","required":true,"question":"Type of project","description":"Commercial, Residential, Hospital, etc.","sectionId":"c2pwjra"},{"id":"p2k0438","kind":"question","type":"rating","required":true,"question":"From the scale of 1-10, how complex do you rate this project?","description":"10=Totally difficult","ratingMax":10,"sectionId":"c2pwjra"},{"id":"y1547x6","kind":"question","type":"short","required":true,"question":"Roughly in range, how many BQ items are inside the BQ (for structural & architectural works)?","description":"","sectionId":"c2pwjra"},{"id":"gm600oc","kind":"section","title":"Drawing Management","description":"","logic":[]},{"id":"dlvqc5o","kind":"question","type":"rating","required":true,"question":"From the scale of 1-10, How would you rate the overall functionality of the drawing management?","description":"10=Totally Awesome","ratingMax":10,"sectionId":"gm600oc"},{"id":"9y36pfp","kind":"question","type":"short","required":true,"question":"Which feature is the most helpful to you in drawing management function group?","description":"","sectionId":"gm600oc"},{"id":"0x4qszt","kind":"question","type":"short","required":true,"question":"Which feature do you like the most in drawing management function group?","description":"","sectionId":"gm600oc"},{"id":"dzi52it","kind":"section","title":"User Interface","description":"","logic":[]},{"id":"s717zk8","kind":"question","type":"rating","required":true,"question":"From the scale of 1-10, how much do you like the new UI/UX?","description":"10=Totally Awesome","ratingMax":10,"sectionId":"dzi52it"},{"id":"ofcj0vq","kind":"question","type":"short","required":true,"question":"Feedback on UI/UX, whether if you have any suggestions to us, we are open for discussions","description":"","sectionId":"dzi52it"},{"id":"00u8umg","kind":"section","title":"Structural + Rebar Modeling","description":"","logic":[]},{"id":"lct64y1","kind":"question","type":"rating","required":true,"question":"Overall experience","description":"From the scale of 1-10, how easy it is to do structural (concrete) modeling in QuantifAI? (10=Totally Awesome)","ratingMax":10,"sectionId":"00u8umg"},{"id":"oojlbuo","kind":"question","type":"short","required":true,"question":"Overall experience","description":"During this modeling process, do you find elements that the software can't accommodate yet?","sectionId":"00u8umg"},{"id":"p15rit7","kind":"matrix","title":"Beam Rebar","description":"","columns":["Satisfaction"],"rows":[{"id":"pvaor45","label":"Smart table","type":"rating"},{"id":"78pj2hs","label":"AI section identify","type":"rating"},{"id":"cxmj1jv","label":" AI side label identify","type":"rating"},{"id":"sxyfknx","label":"Which of the above used more in your daily work?","type":"short"}],"required":true},{"id":"yv1pfm6","kind":"matrix","title":"Vertical Structure Rebar","description":"","columns":["Satisfaction"],"rows":[{"id":"mc9g822","label":"Easiness to use AI Identification in Column Edit Section","type":"rating"},{"id":"s5a20vt","label":"How often do you need to use Column Edit Section?","type":"scale"},{"id":"suy7xoh","label":"Easiness to use Column Smart Table","type":"rating"},{"id":"sigu5y8","label":"Easiness to use AI Identification in Wall Edit Section","type":"rating"},{"id":"a3u0mma","label":"How often do you need to use Wall Edit Section?","type":"scale"},{"id":"wje8e9e","label":"Easiness to use Wall Smart Table","type":"rating"}],"required":true},{"id":"glwmo4d","kind":"matrix","title":"Slab Rebar","description":"","columns":["Satisfaction"],"rows":[{"id":"dteaqp1","label":"Easiness to use Parametric Arrangement","type":"rating"},{"id":"qzefpie","label":"Easiness to use Merge Main Bar","type":"rating"},{"id":"dyqxh64","label":"How often do you need to use Merge Main Bar?","type":"scale"}],"required":true},{"id":"tdv1in9","kind":"section","title":"Finishes","description":"","logic":[]},{"id":"tgwf2j2","kind":"question","type":"rating","required":true,"question":"Rate your experience","description":"From the scale of 1-10, how easy it is to do finishes modeling in QuantifAI? 10=Totally Awesome","ratingMax":10,"sectionId":"tdv1in9"},{"id":"ep56zfe","kind":"question","type":"short","required":true,"question":"During this modeling process, do you find elements that the software can't accommodate yet?","description":"","sectionId":"tdv1in9"},{"id":"qy6z5zl","kind":"question","type":"short","required":true,"question":"Among Finish elements, which feature or element should be improved?","description":"","sectionId":"tdv1in9"},{"id":"j8wc5zt","kind":"question","type":"multibutton","required":true,"question":"How often you need to use QuantifAI for measuring finishes?","description":"","options":["All projects need to use software to measure finishes","Half projects use software, and the other half projects don't need finishes quantity","Half projects use software, and the other half projects use manual to measure","Only little bit, a few projects need to use software to measure finishes"],"sectionId":"tdv1in9"},{"id":"dyjxsco","kind":"matrix","title":"Quantity Report","description":"","columns":["Satisfaction"],"rows":[{"id":"qhz02vw","label":"How do you evaluate our report module?","type":"rating"},{"id":"kjehuj7","label":"How frequently do you use the report module?","type":"scale"}],"required":true},{"id":"tv1v1va","kind":"section","title":"Other Features","description":"","logic":[]},{"id":"iu3uugi","kind":"question","type":"rating","required":true,"question":"From the scale of 1-10, how much will you rate the 2-in-1 capability in this software? ","description":"10=Totally Awesome","ratingMax":10,"sectionId":"tv1v1va"},{"id":"6xjwh7r","kind":"question","type":"rating","required":true,"question":"From the scale of 1-10, how much will you rate the multiple project capability in this software?","description":"10=Totally Awesome","ratingMax":10,"sectionId":"tv1v1va"},{"id":"z0kyrq5","kind":"question","type":"short","required":true,"question":"Would you like to give us some suggestions on the other features?","description":"","sectionId":"tv1v1va"}];
     S.settings = {"title":"QuantifAI Survey","accent":"#5b3ef8","font":"Syne","welcome":{"title":"Welcome! 👋","subtitle":"This form will only take a few minutes.","buttonText":"Let's go →","drawing":null},"end":{"title":"All done! 🎉","subtitle":"Thank you so much for your responses.","drawing":null}};
 
@@ -1777,20 +1826,39 @@ function exportHTML() {
       launchPreview();
     };
 
-    // Override the submission function to send data to Pantry
-    submitForm = function() {
-      if(S.submitted) return;
+    // ── UPDATED submitForm: APPEND instead of REPLACE ─────────────────────
+    submitForm = async function() {
+      if (S.submitted) return;
       const sm = slideMap[S.currentSlide];
 
-      // Run standard form validations
-      if(sm.type==='question'){const q=S.items.find(i=>i.id===sm.id);if(q&&q.required){const ans=S.answers[q.id];if(ans==null||ans===''||(Array.isArray(ans)&&!ans.length)){toast('⚠️ This question is required');return;}}}
-      if(sm.type==='section'){const sec=S.items.find(i=>i.id===sm.id);if(sec){for(const cq of S.items.filter(q=>q.kind==='question'&&q.sectionId===sec.id)){if(cq.required&&(S.answers[cq.id]==null||S.answers[cq.id]==='')) {toast('⚠️ "'+(cq.question||'Q').slice(0,25)+'" is required');return;}}}}
+      // Validation (unchanged)
+      if (sm.type === 'question') {
+        const q = S.items.find(i => i.id === sm.id);
+        if (q && q.required) {
+          const ans = S.answers[q.id];
+          if (ans == null || ans === '' || (Array.isArray(ans) && !ans.length)) {
+            toast('⚠️ This question is required');
+            return;
+          }
+        }
+      }
+      if (sm.type === 'section') {
+        const sec = S.items.find(i => i.id === sm.id);
+        if (sec) {
+          for (const cq of S.items.filter(q => q.kind === 'question' && q.sectionId === sec.id)) {
+            if (cq.required && (S.answers[cq.id] == null || S.answers[cq.id] === '')) {
+              toast('⚠️ "' + (cq.question || 'Q').slice(0,25) + '" is required');
+              return;
+            }
+          }
+        }
+      }
 
       S.submitted = true;
-      const allQs = S.items.filter(i=>i.kind==='question');
-      const allMats = S.items.filter(i=>i.kind==='matrix');
 
-      // Construct JSON payload
+      const allQs = S.items.filter(i => i.kind === 'question');
+      const allMats = S.items.filter(i => i.kind === 'matrix');
+
       const resp = {
         id: uid(),
         timestamp: new Date().toISOString(),
@@ -1799,26 +1867,56 @@ function exportHTML() {
         matrixAnswers: {}
       };
 
-      allQs.forEach(q=>{resp.answers[q.id]={question:q.question,type:q.type,value:S.answers[q.id]??null};});
-      allMats.forEach(m=>{resp.matrixAnswers[m.id]={title:m.title,columns:m.columns,rows:m.rows.map(r=>({label:r.label,type:r.type,values:m.columns.reduce((acc,col)=>{const key=r.id+'::'+col;acc[col]=S.answers[m.id]?.[key]??null;return acc;},{})}))};});
+      allQs.forEach(q => { resp.answers[q.id] = { question: q.question, type: q.type, value: S.answers[q.id] ?? null }; });
+      allMats.forEach(m => {
+        resp.matrixAnswers[m.id] = {
+          title: m.title,
+          columns: m.columns,
+          rows: m.rows.map(r => ({
+            label: r.label,
+            type: r.type,
+            values: m.columns.reduce((acc, col) => {
+              const key = r.id + '::' + col;
+              acc[col] = S.answers[m.id]?.[key] ?? null;
+              return acc;
+            }, {})
+          }))
+        };
+      });
 
-      // Show success sequence
+      // Show success UI
       clearRespondentProgress();
-      document.getElementById('progFill').style.width='100%';
-      exitSlide(()=>goSlide(slideMap.length-1));
+      document.getElementById('progFill').style.width = '100%';
+      exitSlide(() => goSlide(slideMap.length - 1));
       toast('🎉 Submitted!');
 
-      // PANTRY POST REQUEST
+      // ── APPEND to GetPantry (the fix) ─────────────────────────────
       if (PANTRY_URL) {
-        fetch(PANTRY_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(resp)
-        })
-        .then(r => console.log('Successfully saved to Pantry!'))
-        .catch(e => console.error('Failed to save to Pantry:', e));
-      } else {
-        console.warn('Pantry URL not set! Form data was not sent.');
+        try {
+          // 1. Get current data
+          const getRes = await fetch(PANTRY_URL, { method: 'GET' });
+          let current = [];
+          if (getRes.ok) {
+            const data = await getRes.json();
+            if (Array.isArray(data)) current = data;
+            else if (data) current = [data];           // first submission
+          }
+
+          // 2. Append new response
+          current.push(resp);
+
+          // 3. Write full array back
+          await fetch(PANTRY_URL, {
+            method: 'PUT',                              // ← important
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(current)
+          });
+
+          console.log('✅ Appended to Pantry basket successfully');
+        } catch (e) {
+          console.error('Failed to save to Pantry:', e);
+          // still works offline — data is only in local memory
+        }
       }
     };
   </script></body></html>
