@@ -1766,26 +1766,27 @@ function exportHTML() {
       // ── APPEND to GetPantry (the fix) ─────────────────────────────
       if (PANTRY_URL) {
         try {
-          // 1. Get current data
+          // 1. Get current data — GetPantry baskets must be objects, not raw arrays.
+          //    We store responses under the key "responses" to stay compliant.
           const getRes = await fetch(PANTRY_URL, { method: 'GET' });
           let current = [];
           if (getRes.ok) {
             const data = await getRes.json();
-            if (Array.isArray(data)) current = data;
-            else if (data) current = [data];           // first submission
+            // data is always an object: { responses: [...] }
+            if (Array.isArray(data.responses)) current = data.responses;
           }
 
           // 2. Append new response
           current.push(resp);
 
-          // 3. Write full array back
+          // 3. Write full object back — wrapping array keeps basket as valid JSON object
           await fetch(PANTRY_URL, {
-            method: 'PUT',                              // ← important
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(current)
+            body: JSON.stringify({ responses: current })
           });
 
-          console.log('✅ Appended to Pantry basket successfully');
+          console.log('✅ Appended to Pantry basket successfully (' + current.length + ' total)');
         } catch (e) {
           console.error('Failed to save to Pantry:', e);
           // still works offline — data is only in local memory
@@ -1893,26 +1894,27 @@ function exportHTML() {
       // ── APPEND to GetPantry (the fix) ─────────────────────────────
       if (PANTRY_URL) {
         try {
-          // 1. Get current data
+          // 1. Get current data — GetPantry baskets must be objects, not raw arrays.
+          //    We store responses under the key "responses" to stay compliant.
           const getRes = await fetch(PANTRY_URL, { method: 'GET' });
           let current = [];
           if (getRes.ok) {
             const data = await getRes.json();
-            if (Array.isArray(data)) current = data;
-            else if (data) current = [data];           // first submission
+            // data is always an object: { responses: [...] }
+            if (Array.isArray(data.responses)) current = data.responses;
           }
 
           // 2. Append new response
           current.push(resp);
 
-          // 3. Write full array back
+          // 3. Write full object back — wrapping array keeps basket as valid JSON object
           await fetch(PANTRY_URL, {
-            method: 'PUT',                              // ← important
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(current)
+            body: JSON.stringify({ responses: current })
           });
 
-          console.log('✅ Appended to Pantry basket successfully');
+          console.log('✅ Appended to Pantry basket successfully (' + current.length + ' total)');
         } catch (e) {
           console.error('Failed to save to Pantry:', e);
           // still works offline — data is only in local memory
